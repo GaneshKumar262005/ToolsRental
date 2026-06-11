@@ -1,0 +1,37 @@
+name: constructhub
+description: A modern construction tools rental app
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.1.0
+  lottie: ^3.0.0
+  cached_network_image: ^3.3.1
+  shimmer: ^3.0.0
+  flutter_svg: ^2.0.9
+  intl: ^0.18.1
+  smooth_page_indicator: ^1.1.0
+  carousel_slider: ^5.0.0
+  flutter_animate: ^4.5.0
+  table_calendar: ^3.0.9
+  fl_chart: ^0.66.0
+  badges: ^3.1.2
+  dotted_border: ^2.1.0
+  http: ^1.1.0
+  image_picker: ^1.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/

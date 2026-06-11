@@ -1,0 +1,116 @@
+[
+  {
+    "id": 1,
+    "name": "sasi",
+    "email": "sasi@gmail.com",
+    "password": "$2a$10$G.I/0.kJ3tTdzgEKcBf.iOHMhRBnD4ovccVq6NFqkfz3kGkNkhsb2"
+  },
+  {
+    "id": 2,
+    "name": "ganeshkumar",
+    "email": "ganesh@GMAIL.COM",
+    "password": "$2a$10$RSbgQ2TbsS3mkhreG/3GVOSvnCEHdHjVVOXH8bMb9BcbM5VZzxUsi"
+  },
+  {
+    "id": 3,
+    "name": "rose",
+    "email": "rose@gmail.com",
+    "password": "$2a$10$ray6r5FgqKpNw2Bq1Nah.elV5oElg6.Fhv//3r0rIRTkKmHFAJqa6"
+  },
+  {
+    "id": 4,
+    "name": "monica",
+    "email": "monica@gmail.com",
+    "password": "$2a$10$8MGqIuHiJhNIHV8Raa.tC.xxb0YJYDvLycxIKWo8BoKMSX1qmyTtq"
+  },
+  {
+    "id": 5,
+    "name": "naveen",
+    "email": "naveen@gmail.com",
+    "password": "$2a$10$e8rjkiNih0T2WLRFwpX3FuMoY4qUVhfIfBXPvP1yFBLN1P831Nvea"
+  },
+  {
+    "id": 6,
+    "name": "sam",
+    "email": "sam@gmail.com",
+    "password": "$2a$10$xnE4so7LefSZqWoWUrd.LeOhI1A9pRz1OFsNtSd1hnHIWw9bNC7JC"
+  },
+  {
+    "id": 7,
+    "name": "abi",
+    "email": "abi@gmail.com",
+    "password": "$2a$10$DOH0.2V2Db9qytwyjemhLe6jrEANrrszg882QV5jyjw4LgSV3jaZG"
+  },
+  {
+    "id": 8,
+    "name": "ganesh",
+    "email": "ganesh@constructhub.com",
+    "password": "$2a$10$e5ouqvUbTF2RHg0jHgQjvu8sCtH.XU6t0SXPDQ3ErP2sY1f.or/9K",
+    "role": "user",
+    "phone": "",
+    "location": ""
+  },
+  {
+    "id": 9,
+    "name": "hema",
+    "email": "hema@gmail.com",
+    "password": "$2a$10$pcHIb0MMMT.REbBrhwts7euAqsmFL3QKN.dlInPqoFfnMaWQ7SCf.",
+    "role": "user",
+    "phone": "",
+    "location": ""
+  },
+  {
+    "id": 10,
+    "name": "ganesh kumar",
+    "email": "ganesh1@gmail.com",
+    "password": "$2a$10$QaFKJK52W93t2ijf.1vU.ueCFw8gFT.5K7i7zPMHMavhzw5g1js0K",
+    "role": "user",
+    "phone": "0987654321",
+    "location": "chennai"
+  },
+  {
+    "id": 11,
+    "name": "ganesh",
+    "email": "admin@construct@.com",
+    "password": "$2a$10$b3Dwy2200AilZb5NizZ6uO0LuXJK7rqnBXdtPnKfYtsMubxdY2JKy",
+    "role": "user",
+    "phone": "",
+    "location": ""
+  },
+  {
+    "id": 12,
+    "name": "ram",
+    "email": "ram@gmail.com",
+    "password": "$2a$10$AFG1ixtpTXBqSWZP9SV9VO/CCb1ns9Gz2y3MMu04i5KsbrNVz234C",
+    "role": "user",
+    "phone": "1234567890",
+    "location": "chennai"
+  },
+  {
+    "id": 13,
+    "name": "boys",
+    "email": "boys@gmail.com",
+    "password": "$2a$10$c3PF/ulBDdI7mXkBZtE6De4ZfKhjkpinPd1yN0TM3nvSAcL4g9zyO",
+    "role": "user",
+    "phone": "0987654321",
+    "location": "chennai"
+  },
+  {
+    "id": 14,
+    "name": "ram",
+    "email": "shopowner@gmail.com",
+    "password": "$2a$10$3zK2L0ojImQgUMqmbeOnO.bB2ShSBcqDVy.cNDTcACBWiZ9zwnc7i",
+    "role": "user",
+    "phone": "",
+    "location": ""
+  },
+  {
+    "id": 15,
+    "name": "see",
+    "email": "see@gmail.com",
+    "password": "$2a$10$Q0hdf2f4sTc5c4/D31EEleucNyld315ax/85u2zatmixijEWpCEke",
+    "role": "user",
+    "phone": "1234567890",
+    "location": "chennai"
+  }
+]
