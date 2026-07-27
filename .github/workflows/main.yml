@@ -11,8 +11,36 @@ on:
       - master
 
 jobs:
-  flutter-build:
-    name: Flutter Build & Test
+  backend:
+    name: Backend CI
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Backend Dependencies
+        run: npm install
+
+      - name: Check Server Syntax
+        run: node -c server.js
+
+      - name: Run Backend Tests
+        run: npm test --if-present
+
+  flutter:
+    name: Flutter CI
     runs-on: ubuntu-latest
 
     steps:
@@ -28,13 +56,13 @@ jobs:
       - name: Flutter Version
         run: flutter --version
 
-      - name: Install Dependencies
+      - name: Install Flutter Dependencies
         run: flutter pub get
 
-      - name: Analyze Project
+      - name: Analyze Flutter Code
         run: flutter analyze
 
-      - name: Run Tests
+      - name: Run Flutter Tests
         run: flutter test
         continue-on-error: true
 
