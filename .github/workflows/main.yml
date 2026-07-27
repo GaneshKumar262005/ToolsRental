@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 name: BuildRent CI/CD
 
 on:
@@ -58,3 +59,69 @@ jobs:
 
     - name: Build Web Application
       run: flutter build web --release
+=======
+name: BuildRent CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  buildrent:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Flutter Version
+        run: flutter --version
+
+      - name: Get Packages
+        run: flutter pub get
+
+      - name: Analyze Project
+        run: flutter analyze
+
+      - name: Run Tests
+        run: flutter test || true
+
+      - name: Build Release APK
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BuildRent-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload APPIUM Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: APPIUM_TEST_CASES
+          path: APPIUM_TEST_CASES.xlsx
+          if-no-files-found: warn
+
+      - name: Upload Audit Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: MASTER_TEST_AUDIT_REPORT
+          path: MASTER_TEST_AUDIT_REPORT.xlsx
+          if-no-files-found: warn
+
+      - name: Upload Markdown Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: FINAL_AUDIT_REPORT
+          path: FINAL_AUDIT_REPORT.md
+          if-no-files-found: warn
+>>>>>>> 8127fa1e76c89b3b789e9999a6376f1556147cfb
