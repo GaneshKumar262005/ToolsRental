@@ -1,31 +1,23 @@
 const Service = require('node-windows').Service;
+const config = require('./service_config');
 
-// Create a new service object
 const svc = new Service({
-  name: 'ConstructHub Backend',
-  description: 'ConstructHub Backend Server',
-  script: 'C:\\Users\\ganes\\OneDrive\\Desktop\\pro\\win\\backend\\server.js',
-  nodeOptions: [
-    '--harmony',
-    '--max_old_space_size=4096'
-  ]
+  name: config.name,
+  description: config.description,
+  script: config.script,
+  workingDirectory: config.workingDirectory,
+  nodeOptions: config.nodeOptions,
+  env: Object.entries(config.env).map(([k, v]) => ({ name: k, value: v })),
+  restart: true, // auto-restart enabled per user selection
 });
 
-// Listen for the "install" event
-svc.on('install', function(){
+svc.on('install', () => {
   svc.start();
-  console.log('Service installed and started successfully');
+  console.log('Service installed and started');
 });
+svc.on('alreadyinstalled', () => console.log('Service already installed'));
+svc.on('start', () => console.log('Service started'));
+svc.on('stop', () => console.log('Service stopped'));
+svc.on('error', err => console.error('Service error:', err));
 
-// Listen for the "uninstall" event
-svc.on('uninstall', function(){
-  console.log('Service uninstalled successfully');
-});
-
-// Listen for the "start" event
-svc.on('start', function(){
-  console.log('Service started successfully');
-});
-
-// Install the service
 svc.install();

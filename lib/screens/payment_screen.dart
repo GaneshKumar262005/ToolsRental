@@ -1,8 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/tool_model.dart';
 import '../themes/app_theme.dart';
 import '../widgets/gradient_button.dart';
+import '../dummy_data/dummy_data.dart';
+
+
 
 class PaymentScreen extends StatefulWidget {
   final Map<String, dynamic> bookingData;
@@ -74,7 +79,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: AppTheme.cardDecoration(),
+              decoration: AppTheme.cardDecoration(context: context),
               child: Row(
                 children: [
                   ClipRRect(
@@ -125,23 +130,25 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 16),
             _buildPaymentMethod(
-                'card', 'Credit/Debit Card', Icons.credit_card,
-                '•••• •••• •••• 4242'),
+                'card', 'Credit / Debit Card', Icons.credit_card,
+                'Visa, Mastercard, RuPay'),
             const SizedBox(height: 12),
             _buildPaymentMethod(
-                'upi', 'UPI', Icons.account_balance, 'Select UPI App'),
+                'upi', 'UPI Payment (GPay, PhonePe, Paytm)', Icons.account_balance,
+                'Google Pay, PhonePe, Paytm, BHIM'),
             const SizedBox(height: 12),
-            _buildPaymentMethod('netbanking', 'Net Banking',
-                Icons.account_balance_wallet, 'Select Bank'),
+            _buildPaymentMethod('bank', 'Bank Transfer',
+                Icons.account_balance_wallet, 'Direct NEFT / RTGS Bank Transfer'),
             const SizedBox(height: 24),
-            // Card details
+
+            // Card details form
             if (_selectedPaymentMethod == 'card') ...[
               Text('Card Details',
                   style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: AppTheme.cardDecoration(),
+                decoration: AppTheme.cardDecoration(context: context),
                 child: Column(
                   children: [
                     TextFormField(
@@ -177,11 +184,52 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+
+            // UPI Options
+            if (_selectedPaymentMethod == 'upi') ...[
+              Text('Select UPI Application',
+                  style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: AppTheme.cardDecoration(context: context),
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.phone_android, color: Colors.blue),
+                      title: const Text('Google Pay (GPay)', style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: const Text('Fast 1-click UPI checkout'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () {},
+                    ),
+                    const Divider(),
+                    ListTile(
+                      leading: const Icon(Icons.account_balance_wallet, color: Colors.purple),
+                      title: const Text('PhonePe', style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: const Text('UPI ID or Mobile Number'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () {},
+                    ),
+                    const Divider(),
+                    ListTile(
+                      leading: const Icon(Icons.payment, color: Colors.cyan),
+                      title: const Text('Paytm UPI', style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: const Text('Paytm Wallet & UPI'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () {},
+                    ),
+                    const SizedBox(height: 12),
                     TextFormField(
                       decoration: const InputDecoration(
-                        labelText: 'Cardholder Name',
-                        hintText: 'Enter name on card',
+                        labelText: 'Enter Custom VPA / UPI ID',
+                        hintText: 'user@okaxis / username@ybl',
+                        prefixIcon: Icon(Icons.alternate_email),
+                        border: OutlineInputBorder(),
                       ),
                     ),
                   ],
@@ -189,22 +237,62 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
               const SizedBox(height: 24),
             ],
+
+            // Bank Transfer Options
+            if (_selectedPaymentMethod == 'bank') ...[
+              Text('Direct Bank Transfer Account Details',
+                  style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: AppTheme.cardDecoration(context: context),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Beneficiary Name: ConstructHub Rentals Pvt Ltd', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 6),
+                    const Text('Bank: HDFC Bank (Anna Nagar Branch)', style: TextStyle(color: AppTheme.mediumGray)),
+                    const SizedBox(height: 6),
+                    const Text('Account Number: 50200084920192', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryYellow)),
+                    const SizedBox(height: 6),
+                    const Text('IFSC Code: HDFC0001294', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Divider(height: 24),
+                    TextFormField(
+                      decoration: const InputDecoration(
+                        labelText: 'Transaction Reference UTR / Ref No',
+                        hintText: 'Enter 12-digit UTR No. after payment',
+                        prefixIcon: Icon(Icons.receipt_long),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+
             // Payment details
             Text('Payment Details',
                 style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(16),
-              decoration: AppTheme.cardDecoration(),
+              padding: const EdgeInsets.all(18),
+              decoration: AppTheme.cardDecoration(context: context),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildPriceRow('Subtotal',
-                      '₹${(_totalPrice - 830).toStringAsFixed(0)}'),
-                  const Divider(height: 24),
-                  _buildPriceRow('Service Fee', '₹830'),
-                  const Divider(height: 24),
+                  _buildPriceRow('Tool Rental Daily Fee',
+                      '₹${(_totalPrice * 0.75).toStringAsFixed(0)}'),
+                  const SizedBox(height: 12),
+                  _buildPriceRow('Service & Delivery Fee', '₹350'),
+                  const SizedBox(height: 12),
+                  _buildPriceRow('GST / Taxes (18%)',
+                      '₹${((_totalPrice * 0.75 + 350) * 0.18).toStringAsFixed(0)}'),
+                  const SizedBox(height: 12),
+                  _buildPriceRow('Refundable Security Deposit', '₹500'),
+                  const Divider(height: 28, thickness: 1),
                   _buildPriceRow(
-                    'Total Amount',
+                    'Total Payable Amount',
                     '₹${_totalPrice.toStringAsFixed(0)}',
                     isBold: true,
                     color: AppTheme.primaryYellow,
@@ -231,12 +319,49 @@ class _PaymentScreenState extends State<PaymentScreen> {
         child: SafeArea(
           child: GradientButton(
             text: _isProcessing
-                ? 'Processing...'
+                ? 'Processing Payment...'
                 : 'Pay ₹${_totalPrice.toStringAsFixed(0)}',
             onPressed: _isProcessing
                 ? null
-                : () {
+                : () async {
                     setState(() => _isProcessing = true);
+
+                    // Credit revenue to Shop Owner Dashboard via SharedPreferences
+                    final prefs = await SharedPreferences.getInstance();
+                    final double currentRevenue = prefs.getDouble('shop_owner_total_earnings') ?? 48500.0;
+                    final double updatedRevenue = currentRevenue + _totalPrice;
+                    await prefs.setDouble('shop_owner_total_earnings', updatedRevenue);
+
+                    // Record real customer booking into SharedPreferences
+                    final List<String> customerBookings = prefs.getStringList('customer_real_bookings') ?? [];
+                    final newBookingJson = jsonEncode({
+                      'id': 'BK${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
+                      'status': 'pending',
+                      'startDate': DateTime.now().toIso8601String(),
+                      'endDate': DateTime.now().add(const Duration(days: 3)).toIso8601String(),
+                      'rentalDays': 3,
+                      'totalPrice': _totalPrice,
+                      'userName': prefs.getString('userName') ?? DummyData.currentUser.name,
+                      'userPhone': DummyData.currentUser.phone,
+                      'userAddress': DummyData.currentUser.location,
+                      'paymentMethod': _selectedPaymentMethod,
+                      'tool': {
+                        'id': tool.id,
+                        'name': tool.name,
+                        'category': tool.category,
+                        'pricePerDay': tool.pricePerDay,
+                        'imageUrl': tool.imageUrl,
+                      }
+                    });
+                    customerBookings.insert(0, newBookingJson);
+                    await prefs.setStringList('customer_real_bookings', customerBookings);
+
+                    // Record transaction details
+                    final List<String> recentTxns = prefs.getStringList('shop_owner_recent_txns') ?? [];
+                    final methodLabel = _selectedPaymentMethod == 'upi' ? 'Paid via UPI (GPay/PhonePe)' : (_selectedPaymentMethod == 'bank' ? 'Direct Bank Transfer' : 'Card Payment');
+                    recentTxns.insert(0, '${tool.name}|₹${_totalPrice.toStringAsFixed(0)}|$methodLabel|Just now');
+                    await prefs.setStringList('shop_owner_recent_txns', recentTxns);
+
                     Future.delayed(const Duration(seconds: 2), () {
                       if (mounted) {
                         setState(() {
@@ -246,12 +371,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       }
                     });
                   },
+
             isLoading: _isProcessing,
           ),
         ),
       ),
     );
   }
+
 
   Widget _buildPaymentMethod(
       String value, String title, IconData icon, String subtitle) {
@@ -328,6 +455,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   Widget _buildPriceRow(String label, String value,
       {bool isBold = false, Color? color}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final defaultTextColor = isDark ? AppTheme.primaryWhite : AppTheme.primaryBlack;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -335,12 +464,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight:
                       isBold ? FontWeight.bold : FontWeight.normal,
+                  color: color ?? defaultTextColor,
                 )),
         Text(value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight:
                       isBold ? FontWeight.bold : FontWeight.w600,
-                  color: color,
+                  color: color ?? defaultTextColor,
                 )),
       ],
     );

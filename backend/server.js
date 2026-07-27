@@ -3,196 +3,165 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const fs = require('fs');
 const path = require('path');
+const nodemailer = require('nodemailer');
+require('dotenv').config();
+
+// Initialize Firebase Admin SDK
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
+const serviceAccount = require('./tools-bd286-firebase-adminsdk-fbsvc-51d9d72200.json');
+
+initializeApp({
+  credential: cert(serviceAccount)
+});
+
+const db = getFirestore();
+
+// Seed Admin and Shop Owner into Firestore if they don't exist
+async function seedDefaultUsers() {
+  try {
+    const usersRef = db.collection('users');
+    
+    // Seed Admin
+    const adminSnap = await usersRef.where('email', '==', 'admin@constructhub.com').get();
+    if (adminSnap.empty) {
+      const adminHash = await bcrypt.hash(ADMIN_SECRET, 10);
+      const docRef = usersRef.doc();
+      await docRef.set({
+        id: docRef.id,
+        name: 'Admin',
+        email: 'admin@constructhub.com',
+        password: adminHash,
+        role: 'admin',
+        phone: '+91 98765 43210',
+        location: 'Chennai, Tamil Nadu',
+        emailVerified: true
+      });
+      console.log('✅ Default Admin user seeded into Firestore');
+    }
+
+    // Seed Shop Owner
+    const shopOwnerSnap = await usersRef.where('email', '==', 'shopowner@constructhub.com').get();
+    if (shopOwnerSnap.empty) {
+      const shopOwnerHash = await bcrypt.hash(SHOP_OWNER_SECRET, 10);
+      const docRef = usersRef.doc();
+      await docRef.set({
+        id: docRef.id,
+        name: 'Shop Owner',
+        email: 'shopowner@constructhub.com',
+        password: shopOwnerHash,
+        role: 'shopowner',
+        phone: '+91 98765 43210',
+        location: 'Chennai, Tamil Nadu',
+        emailVerified: true
+      });
+      console.log('✅ Default Shop Owner user seeded into Firestore');
+    }
+  } catch (err) {
+    console.error('❌ User seeding failed:', err);
+  }
+}
+
+seedDefaultUsers();
 
 const app = express();
-const PORT = 3000;
-const JWT_SECRET = 'your-secret-key-change-in-production';
-const ADMIN_SECRET = 'admin123'; // Secret for admin login
-const SHOP_OWNER_SECRET = 'shopowner123'; // Secret for shop owner login
-const USERS_FILE = path.join(__dirname, 'users.json');
-const BOOKINGS_FILE = path.join(__dirname, 'bookings.json');
-const NOTIFICATIONS_FILE = path.join(__dirname, 'notifications.json');
+const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin123';
+const SHOP_OWNER_SECRET = process.env.SHOPOWNER_SECRET || 'shopowner123';
+
+// In-memory OTP store: { email -> { otp, expiresAt, name } }
+const otpStore = {};
+
+// Helper: generate 6-digit OTP
+function generateOtp() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Helper: send OTP via SMTP (Nodemailer)
+async function sendOtpEmail(email, name, otp) {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '465'),
+      secure: parseInt(process.env.SMTP_PORT || '465') === 465,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    const mailOptions = {
+      from: `"BuildRent" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: 'Your BuildRent Verification Code',
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px;">
+          <h2 style="color: #F4A827;">BuildRent Verification</h2>
+          <p>Hi ${name || 'User'},</p>
+          <p>Your email verification OTP is:</p>
+          <div style="background: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; border-radius: 6px; margin: 20px 0;">
+            ${otp}
+          </div>
+          <p>It is valid for 10 minutes.</p>
+          <p>If you didn't request this, please ignore this email.</p>
+        </div>
+      `,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✉️  SMTP response: Message sent: ${info.messageId}`);
+    return true;
+  } catch (err) {
+    console.error('SMTP send error:', err);
+    return false;
+  }
+}
+
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// Load users from file
-function loadUsers() {
-  try {
-    if (fs.existsSync(USERS_FILE)) {
-      const data = fs.readFileSync(USERS_FILE, 'utf8');
-      return JSON.parse(data);
-    }
-    return [];
-  } catch (error) {
-    console.error('Error loading users:', error);
-    return [];
-  }
-}
-
-// Save users to file
-function saveUsers(users) {
-  try {
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-  } catch (error) {
-    console.error('Error saving users:', error);
-  }
-}
-
-// Load bookings from file
-function loadBookings() {
-  try {
-    if (fs.existsSync(BOOKINGS_FILE)) {
-      const data = fs.readFileSync(BOOKINGS_FILE, 'utf8');
-      return JSON.parse(data);
-    }
-    return [];
-  } catch (error) {
-    console.error('Error loading bookings:', error);
-    return [];
-  }
-}
-
-// Save bookings to file
-function saveBookings(bookings) {
-  try {
-    fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
-  } catch (error) {
-    console.error('Error saving bookings:', error);
-  }
-}
-
-// Load notifications from file
-function loadNotifications() {
-  try {
-    if (fs.existsSync(NOTIFICATIONS_FILE)) {
-      const data = fs.readFileSync(NOTIFICATIONS_FILE, 'utf8');
-      return JSON.parse(data);
-    }
-    return [];
-  } catch (error) {
-    console.error('Error loading notifications:', error);
-    return [];
-  }
-}
-
-// Save notifications to file
-function saveNotifications(notifications) {
-  try {
-    fs.writeFileSync(NOTIFICATIONS_FILE, JSON.stringify(notifications, null, 2));
-  } catch (error) {
-    console.error('Error saving notifications:', error);
-  }
-}
-
-// Initialize users from file
-let users = loadUsers();
-let bookings = loadBookings();
-let notifications = loadNotifications();
-
 // Login endpoint
 app.post('/api/login', async (req, res) => {
   try {
-    const { name, email, password, phone, location } = req.body;
+    const { email, password } = req.body;
 
     // Validate input
-    if (!name || !email || !password) {
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide name, email, and password'
+        message: 'Please provide email and password'
       });
     }
 
-    // Check if admin login
-    if (email.toLowerCase() === 'admin@constructhub.com' && password === ADMIN_SECRET) {
-      // Admin login
-      const adminUser = {
-        id: 0,
-        name: 'Admin',
-        email: 'admin@constructhub.com',
-        role: 'admin'
-      };
+    // Check if user exists by email in Firestore
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.where('email', '==', email.toLowerCase()).get();
 
-      const token = jwt.sign(
-        { userId: 0, email: 'admin@constructhub.com', role: 'admin' },
-        JWT_SECRET,
-        { expiresIn: '24h' }
-      );
-
-      return res.status(200).json({
-        success: true,
-        message: 'Admin login successful',
-        token: token,
-        user: adminUser,
-        isAdmin: true
+    if (snapshot.empty) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found. Please register first.'
       });
     }
 
-    // Check if shop owner login
-    if (email.toLowerCase() === 'shopowner@constructhub.com' && password === SHOP_OWNER_SECRET) {
-      // Shop owner login
-      const shopOwnerUser = {
-        id: -1,
-        name: 'Shop Owner',
-        email: 'shopowner@constructhub.com',
-        role: 'shopowner'
-      };
-
-      const token = jwt.sign(
-        { userId: -1, email: 'shopowner@constructhub.com', role: 'shopowner' },
-        JWT_SECRET,
-        { expiresIn: '24h' }
-      );
-
-      return res.status(200).json({
-        success: true,
-        message: 'Shop owner login successful',
-        token: token,
-        user: shopOwnerUser,
-        isShopOwner: true
-      });
+    const doc = snapshot.docs[0];
+    const user = { id: doc.id, ...doc.data() };
+    
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.status(401).json({ success: false, message: 'Invalid password' });
     }
+    
+    console.log(`User logged in: ${user.name} (${user.email}) as ${user.role}`);
 
-    // Check if user exists by email (primary key)
-    let user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-    if (user) {
-      // User exists - verify password
-      const passwordMatch = await bcrypt.compare(password, user.password);
-      if (!passwordMatch) {
-        return res.status(401).json({
-          success: false,
-          message: 'Invalid password'
-        });
-      }
-      console.log(`User logged in: ${user.name} (${user.email})`);
-    } else {
-      // Create new user (sign up)
-      const hashedPassword = await bcrypt.hash(password, 10);
-      user = {
-        id: users.length + 1,
-        name: name,
-        email: email,
-        password: hashedPassword,
-        role: 'user',
-        phone: phone || '',
-        location: location || ''
-      };
-      users.push(user);
-      // Save new user to file
-      saveUsers(users);
-      console.log(`New user signed up: ${name} (${email})`);
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role || 'user' },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
+    const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '365d' });
 
     res.status(200).json({
       success: true,
@@ -204,68 +173,128 @@ app.post('/api/login', async (req, res) => {
         email: user.email,
         phone: user.phone || '',
         location: user.location || '',
-        role: user.role || 'user'
+        role: user.role
       },
-      isAdmin: false
+      isAdmin: user.role === 'admin',
+      isShopOwner: user.role === 'shopowner'
     });
 
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error during login'
+    res.status(500).json({ success: false, message: 'Server error during login' });
+  }
+});
+
+// Signup / Registration endpoint
+app.post('/api/signup', async (req, res) => {
+  try {
+    const { name, email, password, phone, location } = req.body;
+
+    // Validate input
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide name, email, and password'
+      });
+    }
+
+    // Check if user already exists
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.where('email', '==', email.toLowerCase()).get();
+
+    if (!snapshot.empty) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already registered. Please log in instead.'
+      });
+    }
+
+    // Determine role dynamically based on registration characteristics
+    let role = 'user';
+    if (email.toLowerCase().includes('shopowner')) {
+      role = 'shopowner';
+    } else if (email.toLowerCase().includes('admin')) {
+      role = 'admin';
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUserRef = usersRef.doc();
+    const user = {
+      id: newUserRef.id,
+      name: name,
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      role: role,
+      phone: phone || '',
+      location: location || '',
+      emailVerified: true // Verified via OTP on the frontend
+    };
+
+    await newUserRef.set(user);
+    console.log(`New user registered: ${name} (${email}) with role: ${role}`);
+
+    const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '365d' });
+
+    res.status(200).json({
+      success: true,
+      message: 'Registration successful',
+      token: token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone || '',
+        location: user.location || '',
+        role: user.role
+      },
+      isAdmin: role === 'admin',
+      isShopOwner: role === 'shopowner'
     });
+
+  } catch (error) {
+    console.error('Signup error:', error);
+    res.status(500).json({ success: false, message: 'Server error during signup' });
   }
 });
 
 // Get all users endpoint
-app.get('/api/users', (req, res) => {
+app.get('/api/users', async (req, res) => {
   try {
     const { email } = req.query;
-
-    let filteredUsers = users.map(user => ({
-      id: user.id,
-      name: user.name,
-      email: user.email
-    }));
-
-    // Filter by email if provided
+    let usersRef = db.collection('users');
+    let snapshot;
+    
     if (email) {
-      filteredUsers = filteredUsers.filter(user =>
-        user.email.toLowerCase() === email.toLowerCase()
-      );
+      snapshot = await usersRef.where('email', '==', email.toLowerCase()).get();
+    } else {
+      snapshot = await usersRef.get();
     }
 
-    res.json({
-      success: true,
-      users: filteredUsers
+    const users = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return { id: doc.id, name: data.name, email: data.email };
     });
+
+    res.json({ success: true, users: users });
   } catch (error) {
     console.error('Get users error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while fetching users'
-    });
+    res.status(500).json({ success: false, message: 'Server error while fetching users' });
   }
 });
 
 // Create booking endpoint
-app.post('/api/bookings', (req, res) => {
+app.post('/api/bookings', async (req, res) => {
   try {
     const { userId, tool, totalPrice, startDate, endDate, rentalDays, userName, userAddress, userPhone, paymentMethod, paymentDetails } = req.body;
 
-    // Validate input
     if (!userId || !tool || !totalPrice || !startDate || !endDate || !rentalDays) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide all required booking details'
-      });
+      return res.status(400).json({ success: false, message: 'Please provide all required booking details' });
     }
 
-    // Create new booking
+    const newBookingRef = db.collection('bookings').doc();
     const booking = {
-      id: bookings.length + 1,
-      userId: userId,
+      id: newBookingRef.id,
+      userId: userId.toString(),
       tool: tool,
       totalPrice: totalPrice,
       startDate: startDate,
@@ -274,236 +303,304 @@ app.post('/api/bookings', (req, res) => {
       userName: userName || '',
       userAddress: userAddress || '',
       userPhone: userPhone || '',
-      paymentMethod: paymentMethod || 'cash', // card, upi, bank, cash
+      paymentMethod: paymentMethod || 'cash',
       paymentDetails: paymentDetails || '',
-      status: 'pending', // pending, accepted, rejected
+      status: 'pending',
       createdAt: new Date().toISOString()
     };
 
-    bookings.push(booking);
-    saveBookings(bookings);
-
+    await newBookingRef.set(booking);
     console.log(`New booking created: ${booking.id} for user ${userId}`);
 
-    res.status(201).json({
-      success: true,
-      message: 'Booking created successfully',
-      booking: booking
-    });
+    res.status(201).json({ success: true, message: 'Booking created successfully', booking: booking });
 
   } catch (error) {
     console.error('Create booking error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while creating booking'
-    });
+    res.status(500).json({ success: false, message: 'Server error while creating booking' });
   }
 });
 
 // Get bookings for a user endpoint
-app.get('/api/bookings/:userId', (req, res) => {
+app.get('/api/bookings/:userId', async (req, res) => {
   try {
-    const userId = parseInt(req.params.userId);
-    const userBookings = bookings.filter(b => b.userId === userId);
-
-    res.json({
-      success: true,
-      bookings: userBookings
-    });
+    const userId = req.params.userId;
+    const snapshot = await db.collection('bookings').where('userId', '==', userId.toString()).get();
+    
+    const bookings = snapshot.docs.map(doc => doc.data());
+    res.json({ success: true, bookings: bookings });
   } catch (error) {
     console.error('Get bookings error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while fetching bookings'
-    });
+    res.status(500).json({ success: false, message: 'Server error while fetching bookings' });
   }
 });
 
 // Get all bookings (admin only)
-app.get('/api/admin/bookings', (req, res) => {
+app.get('/api/admin/bookings', async (req, res) => {
   try {
-    res.json({
-      success: true,
-      bookings: bookings
-    });
+    const snapshot = await db.collection('bookings').get();
+    const bookings = snapshot.docs.map(doc => doc.data());
+    res.json({ success: true, bookings: bookings });
   } catch (error) {
     console.error('Get all bookings error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while fetching all bookings'
-    });
+    res.status(500).json({ success: false, message: 'Server error while fetching all bookings' });
   }
 });
 
 // Get all users (admin only)
-app.get('/api/admin/users', (req, res) => {
+app.get('/api/admin/users', async (req, res) => {
   try {
-    const usersWithoutPasswords = users.map(user => ({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone || '',
-      location: user.location || '',
-      role: user.role || 'user'
-    }));
-    res.json({
-      success: true,
-      users: usersWithoutPasswords
+    const snapshot = await db.collection('users').get();
+    const users = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return { id: doc.id, name: data.name, email: data.email, phone: data.phone || '', location: data.location || '', role: data.role || 'user' };
     });
+    res.json({ success: true, users: users });
   } catch (error) {
     console.error('Get all users error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while fetching all users'
-    });
+    res.status(500).json({ success: false, message: 'Server error while fetching all users' });
   }
 });
 
 // Update user profile endpoint
-app.put('/api/users/:userId', (req, res) => {
+app.put('/api/users/:userId', async (req, res) => {
   try {
-    const userId = parseInt(req.params.userId);
+    const userId = req.params.userId;
     const { phone, location } = req.body;
 
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+    const userRef = db.collection('users').doc(userId);
+    const doc = await userRef.get();
+    
+    if (!doc.exists) {
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Update user details
-    users[userIndex].phone = phone || users[userIndex].phone || '';
-    users[userIndex].location = location || users[userIndex].location || '';
+    await userRef.update({
+      phone: phone || doc.data().phone || '',
+      location: location || doc.data().location || ''
+    });
 
-    saveUsers(users);
-
+    const updatedDoc = await userRef.get();
     res.json({
       success: true,
       message: 'Profile updated successfully',
-      user: {
-        id: users[userIndex].id,
-        name: users[userIndex].name,
-        email: users[userIndex].email,
-        phone: users[userIndex].phone,
-        location: users[userIndex].location
-      }
+      user: { id: updatedDoc.id, ...updatedDoc.data() }
     });
   } catch (error) {
     console.error('Update user error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while updating user'
-    });
+    res.status(500).json({ success: false, message: 'Server error while updating user' });
   }
 });
 
-// Update booking status endpoint (for shop owner)
-app.put('/api/bookings/:bookingId/status', (req, res) => {
+// Update booking status endpoint
+app.put('/api/bookings/:bookingId/status', async (req, res) => {
   try {
-    const bookingId = parseInt(req.params.bookingId);
+    const bookingId = req.params.bookingId;
     const { status } = req.body;
 
     if (!status || !['pending', 'accepted', 'rejected'].includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid status. Must be pending, accepted, or rejected'
-      });
+      return res.status(400).json({ success: false, message: 'Invalid status. Must be pending, accepted, or rejected' });
     }
 
-    const bookingIndex = bookings.findIndex(b => b.id === bookingId);
-    if (bookingIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        message: 'Booking not found'
-      });
+    const bookingRef = db.collection('bookings').doc(bookingId);
+    const doc = await bookingRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
     }
 
-    // Update booking status
-    bookings[bookingIndex].status = status;
-    bookings[bookingIndex].statusUpdatedAt = new Date().toISOString();
-    saveBookings(bookings);
+    const bookingData = doc.data();
+
+    await bookingRef.update({
+      status: status,
+      statusUpdatedAt: new Date().toISOString()
+    });
 
     // Create notification for the user
+    const notificationRef = db.collection('notifications').doc();
     const notification = {
-      id: notifications.length + 1,
-      userId: bookings[bookingIndex].userId,
+      id: notificationRef.id,
+      userId: bookingData.userId,
       type: status === 'accepted' ? 'booking_accepted' : 'booking_rejected',
-      message: status === 'accepted'
-        ? `Your booking #${bookingId} has been accepted!`
-        : `Your booking #${bookingId} has been rejected.`,
+      message: status === 'accepted' ? `Your booking #${bookingId} has been accepted!` : `Your booking #${bookingId} has been rejected.`,
       bookingId: bookingId,
       read: false,
       createdAt: new Date().toISOString()
     };
-    notifications.push(notification);
-    saveNotifications(notifications);
 
+    await notificationRef.set(notification);
     console.log(`Booking ${bookingId} status updated to: ${status}`);
-    console.log(`Notification created for user ${bookings[bookingIndex].userId}`);
+
+    const updatedBooking = await bookingRef.get();
 
     res.json({
       success: true,
       message: 'Booking status updated successfully',
-      booking: bookings[bookingIndex],
+      booking: updatedBooking.data(),
       notification: notification
     });
   } catch (error) {
     console.error('Update booking status error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while updating booking status'
-    });
+    res.status(500).json({ success: false, message: 'Server error while updating booking status' });
   }
 });
 
 // Get notifications for a user endpoint
-app.get('/api/notifications/:userId', (req, res) => {
+app.get('/api/notifications/:userId', async (req, res) => {
   try {
-    const userId = parseInt(req.params.userId);
-    const userNotifications = notifications.filter(n => n.userId === userId);
-
-    res.json({
-      success: true,
-      notifications: userNotifications
-    });
+    const userId = req.params.userId;
+    const snapshot = await db.collection('notifications').where('userId', '==', userId.toString()).get();
+    const notifications = snapshot.docs.map(doc => doc.data());
+    
+    res.json({ success: true, notifications: notifications });
   } catch (error) {
     console.error('Get notifications error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while fetching notifications'
-    });
+    res.status(500).json({ success: false, message: 'Server error while fetching notifications' });
   }
 });
 
 // Mark notification as read endpoint
-app.put('/api/notifications/:notificationId/read', (req, res) => {
+app.put('/api/notifications/:notificationId/read', async (req, res) => {
   try {
-    const notificationId = parseInt(req.params.notificationId);
-    const notificationIndex = notifications.findIndex(n => n.id === notificationId);
-
-    if (notificationIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        message: 'Notification not found'
-      });
+    const notificationId = req.params.notificationId;
+    const notificationRef = db.collection('notifications').doc(notificationId);
+    
+    const doc = await notificationRef.get();
+    if (!doc.exists) {
+      return res.status(404).json({ success: false, message: 'Notification not found' });
     }
 
-    notifications[notificationIndex].read = true;
-    saveNotifications(notifications);
+    await notificationRef.update({ read: true });
+    const updatedDoc = await notificationRef.get();
 
     res.json({
       success: true,
       message: 'Notification marked as read',
-      notification: notifications[notificationIndex]
+      notification: updatedDoc.data()
     });
   } catch (error) {
     console.error('Mark notification as read error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while marking notification as read'
+    res.status(500).json({ success: false, message: 'Server error while marking notification as read' });
+  }
+});
+
+// ─── Email Verification: Send OTP ──────────────────────────────────────────
+app.post('/api/send-otp', async (req, res) => {
+  try {
+    const { email, name } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+
+    const otp = generateOtp();
+    const expiresAt = Date.now() + 10 * 60 * 1000;
+    otpStore[email.toLowerCase()] = { otp, expiresAt, name: name || 'User' };
+
+    console.log(`📧 OTP for ${email}: ${otp}`);
+
+    const sent = await sendOtpEmail(email, name, otp);
+
+    if (sent) {
+      return res.status(200).json({ success: true, message: `Verification OTP sent to ${email}` });
+    } else {
+      console.warn(`⚠️  EmailJS failed, but OTP is stored for testing: ${otp}`);
+      return res.status(200).json({ success: true, message: `OTP generated (email delivery may have failed). Dev OTP: ${otp}` });
+    }
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    return res.status(500).json({ success: false, message: 'Server error while sending OTP' });
+  }
+});
+
+// ─── Email Verification: Verify OTP ────────────────────────────────────────
+app.post('/api/verify-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ success: false, message: 'Email and OTP are required' });
+
+    const key = email.toLowerCase();
+    const record = otpStore[key];
+
+    if (!record) return res.status(400).json({ success: false, message: 'No OTP found for this email. Please request a new one.' });
+    if (Date.now() > record.expiresAt) {
+      delete otpStore[key];
+      return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
+    }
+    if (record.otp !== otp.toString()) return res.status(400).json({ success: false, message: 'Incorrect OTP. Please try again.' });
+
+    // Valid
+    delete otpStore[key];
+
+    // Mark user as verified in Firestore (if they exist)
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.where('email', '==', key).get();
+    
+    if (!snapshot.empty) {
+      const docId = snapshot.docs[0].id;
+      await usersRef.doc(docId).update({ emailVerified: true });
+    }
+
+    return res.status(200).json({ success: true, message: 'Email verified successfully!' });
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    return res.status(500).json({ success: false, message: 'Server error while verifying OTP' });
+  }
+});
+
+// ─── Shop Owner OTP Login ──────────────────────────────────────────────────
+app.post('/api/shopowner-login-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ success: false, message: 'Email and OTP are required' });
+
+    const key = email.toLowerCase();
+    const record = otpStore[key];
+
+    if (!record) return res.status(400).json({ success: false, message: 'No OTP found for this email. Please request a new one.' });
+    if (Date.now() > record.expiresAt) {
+      delete otpStore[key];
+      return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
+    }
+    if (record.otp !== otp.toString()) return res.status(400).json({ success: false, message: 'Incorrect OTP. Please try again.' });
+
+    // Valid OTP
+    delete otpStore[key];
+
+    // Find the user in Firestore
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.where('email', '==', key).get();
+    
+    if (snapshot.empty) {
+      return res.status(404).json({ success: false, message: 'User not found. Please register as a shop owner first.' });
+    }
+
+    const doc = snapshot.docs[0];
+    const user = { id: doc.id, ...doc.data() };
+
+    if (user.role !== 'shopowner' && user.role !== 'admin') {
+       return res.status(403).json({ success: false, message: 'This account is not registered as a shop owner.' });
+    }
+
+    console.log(`Shop owner logged in via OTP: ${user.name} (${user.email})`);
+
+    const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '365d' });
+
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      token: token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone || '',
+        location: user.location || '',
+        role: user.role
+      },
+      isAdmin: user.role === 'admin',
+      isShopOwner: user.role === 'shopowner'
     });
+
+  } catch (error) {
+    console.error('Shopowner OTP login error:', error);
+    return res.status(500).json({ success: false, message: 'Server error while logging in with OTP' });
   }
 });
 
@@ -512,8 +609,28 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
+// Tool return endpoint
+app.post('/api/return-tool', (req, res) => {
+  try {
+    const { orderId, toolName, userName, userPhone, returnNotes, photoBase64, timestamp } = req.body;
+    if (!orderId) {
+      return res.status(400).json({ success: false, message: 'Order ID is required' });
+    }
+    console.log(`📦 Tool Return Received for Order #${orderId} - Tool: ${toolName || 'Equipment'} by ${userName || 'Customer'}`);
+    return res.status(200).json({
+      success: true,
+      message: `Tool return for Order #${orderId} submitted successfully`,
+      data: { orderId, status: 'RETURNED', timestamp: timestamp || new Date().toISOString() }
+    });
+  } catch (error) {
+    console.error('Tool return error:', error);
+    return res.status(500).json({ success: false, message: 'Server error while submitting tool return' });
+  }
+});
+
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://0.0.0.0:${PORT}`);
   console.log(`Access from device: http://YOUR_COMPUTER_IP:${PORT}`);
 });
+

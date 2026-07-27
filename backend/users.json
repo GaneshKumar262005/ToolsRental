@@ -3,7 +3,9 @@
     "id": 1,
     "name": "sasi",
     "email": "sasi@gmail.com",
-    "password": "$2a$10$G.I/0.kJ3tTdzgEKcBf.iOHMhRBnD4ovccVq6NFqkfz3kGkNkhsb2"
+    "password": "$2a$10$G.I/0.kJ3tTdzgEKcBf.iOHMhRBnD4ovccVq6NFqkfz3kGkNkhsb2",
+    "phone": "9876543210",
+    "location": "Chennai"
   },
   {
     "id": 2,
@@ -112,5 +114,50 @@
     "role": "user",
     "phone": "1234567890",
     "location": "chennai"
+  },
+  {
+    "id": 16,
+    "name": "TestUser",
+    "email": "testuser_autotest@gmail.com",
+    "password": "$2a$10$6.fXAKkA3UIDKiKt5cRdsOMcGvOutWcgzOIRIVh8fuNSnq880smDC",
+    "role": "user",
+    "phone": "",
+    "location": ""
+  },
+  {
+    "id": 17,
+    "name": "jagan",
+    "email": "jagan200606@gmail.com",
+    "password": "$2a$10$UI.N585GCiLUTrscD4wZI.qCtX/9LydDI4WLXOrkH5uXXj0ksda4e",
+    "role": "user",
+    "phone": "7358183470",
+    "location": "chennai"
+  },
+  {
+    "id": 18,
+    "name": "ganesh",
+    "email": "ganesh2662005@gmail.com",
+    "password": "$2a$10$mcYkIe.LqcC4NjyS5l6XMO3bQWwTM04aTaMorBTashH.1Hmb7kicu",
+    "role": "user",
+    "phone": "1234567890",
+    "location": "chennai"
+  },
+  {
+    "id": 19,
+    "name": "Ganesh",
+    "email": "ganesh26200507@gmail.com",
+    "password": "$2a$10$wzK.rK0iwHl2iAE8Fif2..iXPNavJEYpXPzE/74Krz78.zgGGRn9O",
+    "role": "user",
+    "phone": "5468787809",
+    "location": "Chennai"
+  },
+  {
+    "id": 20,
+    "name": "suseendhar",
+    "email": "suseendharmadhavan@gmail.com",
+    "password": "$2a$10$6knCzmn58xO/4UVue9YXZeaP2TMuxYjSDDSlMlpbTpVdVXpQ2Bt9K",
+    "role": "user",
+    "phone": "1234567890",
+    "location": "ambur"
   }
 ]

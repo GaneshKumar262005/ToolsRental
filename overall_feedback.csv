@@ -1,0 +1,7 @@
+Category,Feedback,Priority
+"Architecture","The system successfully integrates a Flutter frontend with a Node.js backend. Great foundation!","Low"
+"Database","Migrate from JSON files to a real database like PostgreSQL (as hinted in POSTGRES_SETUP.md) before going to production.","High"
+"Security","Ensure to use environment variables for all secrets and hide the .env file from version control.","High"
+"State Management","Flutter app should migrate from static DummyData to a robust state management solution (Provider/Bloc) for dynamic real-time updates.","Medium"
+"Payment Gateway","Implement a real payment processor (Stripe/Razorpay) in the Node backend for the booking flow instead of mock flows.","Medium"
+"Testing","Implement unit tests and widget tests in Flutter, and Jest tests in Node.js to ensure long-term stability. The default flutter test currently fails because the default starter app tests were not removed.","Medium"

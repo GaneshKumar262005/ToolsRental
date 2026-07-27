@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../themes/app_theme.dart';
@@ -38,7 +40,7 @@ class AppImage extends StatelessWidget {
           return errorWidget ?? _defaultErrorWidget();
         },
       );
-    } else {
+    } else if (imageUrl.startsWith('http')) {
       return CachedNetworkImage(
         imageUrl: imageUrl,
         width: width,
@@ -49,8 +51,34 @@ class AppImage extends StatelessWidget {
         placeholder: (context, url) => placeholder ?? _defaultPlaceholder(),
         errorWidget: (context, url, error) => errorWidget ?? _defaultErrorWidget(),
       );
+    } else {
+      if (kIsWeb) {
+        return Image.network(
+          imageUrl,
+          width: width,
+          height: height,
+          fit: fit,
+          color: color,
+          colorBlendMode: colorBlendMode,
+          errorBuilder: (context, error, stackTrace) {
+            return errorWidget ?? _defaultErrorWidget();
+          },
+        );
+      }
+      return Image.file(
+        File(imageUrl),
+        width: width,
+        height: height,
+        fit: fit,
+        color: color,
+        colorBlendMode: colorBlendMode,
+        errorBuilder: (context, error, stackTrace) {
+          return errorWidget ?? _defaultErrorWidget();
+        },
+      );
     }
   }
+
 
   Widget _defaultPlaceholder() {
     return Container(

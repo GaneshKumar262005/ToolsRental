@@ -1,12 +1,16 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../themes/app_theme.dart';
 import '../widgets/gradient_button.dart';
 import '../config/api_config.dart';
 import '../dummy_data/dummy_data.dart';
 import '../models/user_model.dart';
+import '../services/email_service.dart';
+import '../services/firebase_service.dart';
+
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -39,6 +43,8 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
+  String? _generatedOtp;
+
   Future<void> _signup() async {
     if (_formKey.currentState?.validate() ?? false) {
       if (!_agreeToTerms) {
@@ -59,8 +65,133 @@ class _SignupScreenState extends State<SignupScreen> {
         final String location = _locationController.text.trim();
         final String password = _passwordController.text.trim();
 
+        // 1. Send OTP via backend (now using SMTP Nodemailer)
+        final otpResponse = await EmailService.sendOtp(email: email, name: name);
+
+        if (otpResponse['success'] == true) {
+          // 2. Show OTP Dialog to verify
+          if (mounted) {
+            _showOtpDialog(name, email, phone, location, password);
+          }
+        } else {
+          // If OTP fails to send, show error
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(otpResponse['message'] ?? 'Failed to send OTP via Email. Please try again.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (error) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${error.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }
+  }
+
+  void _showOtpDialog(String name, String email, String phone, String location, String password) {
+    final otpController = TextEditingController();
+    bool verifying = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppTheme.primaryBlack,
+              title: const Text('Verify Email', style: TextStyle(color: AppTheme.primaryWhite)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('We sent a 6-digit code to $email', style: const TextStyle(color: AppTheme.mediumGray)),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: otpController,
+                    style: const TextStyle(color: AppTheme.primaryWhite, letterSpacing: 8, fontSize: 24, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: AppTheme.darkGray,
+                      counterText: '',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: AppTheme.primaryYellow, width: 2),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: verifying ? null : () => Navigator.pop(ctx),
+                  child: const Text('Cancel', style: TextStyle(color: AppTheme.mediumGray)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryYellow,
+                    foregroundColor: Colors.black,
+                  ),
+                  onPressed: verifying ? null : () async {
+                    if (otpController.text.length != 6) return;
+                    setDialogState(() => verifying = true);
+                    
+                    // Backend verification
+                    final res = await EmailService.verifyOtp(email: email, otp: otpController.text);
+                    
+                    if (res['success'] == true) {
+                       Navigator.pop(ctx);
+                       _registerAfterOtp(name, email, phone, location, password);
+                    } else {
+                       setDialogState(() => verifying = false);
+                       if (mounted) {
+                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Incorrect OTP code'), backgroundColor: Colors.red));
+                       }
+                    }
+                  },
+                  child: verifying 
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black)) 
+                    : const Text('Verify & Create', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          }
+        );
+      }
+    );
+  }
+
+
+  Future<void> _registerAfterOtp(String name, String email, String phone, String location, String password) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      String userId = DateTime.now().millisecondsSinceEpoch.toString();
+      String token = 'user-token-${DateTime.now().millisecondsSinceEpoch}';
+
+      try {
         final response = await http.post(
-          Uri.parse(ApiConfig.loginUrl),
+          Uri.parse(ApiConfig.signupUrl),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'name': name,
@@ -68,54 +199,88 @@ class _SignupScreenState extends State<SignupScreen> {
             'phone': phone,
             'location': location,
             'password': password,
+            'role': 'user',
           }),
-        );
+        ).timeout(const Duration(seconds: 4));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
-          if (data['success']) {
-            // Update DummyData.currentUser with backend response
-            final userData = data['user'];
-            DummyData.currentUser = UserModel(
-              id: userData['id'].toString(),
-              name: userData['name'],
-              email: userData['email'],
-              phone: userData['phone'] ?? phone,
-              imageUrl: 'assets/images/download.jpg',
-              location: userData['location'] ?? location,
-            );
-
-            // Sign up successful
-            Navigator.pushReplacementNamed(
-              context,
-              '/home',
-              arguments: {'userName': userData['name']},
-            );
-          } else {
-            // Sign up failed
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(data['message'] ?? 'Sign up failed'),
-                backgroundColor: Colors.red,
-              ),
-            );
+          if (data['success'] == true && data['user'] != null) {
+            userId = data['user']['id'].toString();
+            if (data['token'] != null) token = data['token'];
           }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Server error. Please try again.'),
-              backgroundColor: Colors.red,
-            ),
-          );
         }
-      } catch (error) {
+      } catch (_) {
+        // Backend optional fallback
+      }
+
+      // 1. Update DummyData.currentUser
+      DummyData.currentUser = UserModel(
+        id: userId,
+        name: name,
+        email: email,
+        phone: phone,
+        imageUrl: 'assets/images/avatar.jpg',
+        location: location,
+      );
+
+      // 2. Save active session to SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', token);
+      await prefs.setString('role', 'user');
+      await prefs.setString('userId', userId);
+      await prefs.setString('userName', name);
+      await prefs.setString('userEmail', email);
+
+      // 3. Save User Account to Firebase Firestore
+      final userAccountData = {
+        'id': userId,
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'location': location,
+        'password': password,
+        'role': 'user',
+        'registeredAt': DateTime.now().toIso8601String(),
+      };
+      await FirebaseService().saveUserToFirestore(userAccountData);
+
+      // 4. Permanently store in registered_users persistent list
+      final String registeredUsersJson = prefs.getString('registered_users') ?? '[]';
+      List<dynamic> usersList = jsonDecode(registeredUsersJson);
+      usersList.removeWhere((u) => u['email'] == email);
+      usersList.add(userAccountData);
+
+      await prefs.setString('registered_users', jsonEncode(usersList));
+
+      // 5. Send Welcome Email
+      EmailService.sendWelcomeEmail(name: name, email: email);
+
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account registered successfully! Welcome 🎉'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pushReplacementNamed(
+          context,
+          '/home',
+          arguments: {'userName': name},
+        );
+      }
+    } catch (error) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${error.toString()}'),
+            content: Text('Error creating account: ${error.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
-      } finally {
+      }
+    } finally {
+      if (mounted) {
         setState(() {
           _isLoading = false;
         });

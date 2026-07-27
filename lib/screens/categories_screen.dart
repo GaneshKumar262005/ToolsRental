@@ -15,22 +15,20 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   int _selectedCategory = 0;
 
   final List<Map<String, dynamic>> _categories = [
-    {'name': 'Drilling Machines', 'icon': Icons.hardware},
-    {'name': 'Concrete Mixers', 'icon': Icons.settings},
-    {'name': 'Welding Machines', 'icon': Icons.bolt},
-    {'name': 'Generators', 'icon': Icons.electrical_services},
-    {'name': 'Ladders', 'icon': Icons.stairs},
-    {'name': 'Cutting Tools', 'icon': Icons.content_cut},
-    {'name': 'Safety Equipment', 'icon': Icons.security},
+    {'name': 'Drilling Machines', 'icon': Icons.hardware, 'image': 'assets/images/drilling_machine.png'},
+    {'name': 'Concrete Mixers', 'icon': Icons.settings, 'image': 'assets/images/concrete_mixer.png'},
+    {'name': 'Welding Machines', 'icon': Icons.bolt, 'image': 'assets/images/welding_machine.png'},
+    {'name': 'Generators', 'icon': Icons.electrical_services, 'image': 'assets/images/generator.png'},
+    {'name': 'Ladders', 'icon': Icons.stairs, 'image': 'assets/images/ladder.png'},
+    {'name': 'Cutting Tools', 'icon': Icons.content_cut, 'image': 'assets/images/cutting_tool.png'},
+    {'name': 'Safety Equipment', 'icon': Icons.security, 'image': 'assets/images/safety_equipment.jpg'},
+    {'name': 'Excavation Tools', 'icon': Icons.agriculture, 'image': 'assets/images/excavator.jpg'},
   ];
 
-  List<Map<String, dynamic>> get _filteredTools {
-    final categoryName = _categories[_selectedCategory]['name'];
-    return _tools.where((tool) => tool['category'] == categoryName).toList();
-  }
+
 
   final List<Map<String, dynamic>> _tools = [
-    // Drilling Machines
+    // ── Drilling Machines ──
     {
       'category': 'Drilling Machines',
       'name': 'Bosch Rotary Hammer Drill',
@@ -38,7 +36,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 128,
       'location': 'T. Nagar, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drilling_machine.png',
       'available': true,
     },
     {
@@ -48,7 +46,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 89,
       'location': 'Anna Nagar, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drill_tool.jpg',
       'available': true,
     },
     {
@@ -58,7 +56,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 156,
       'location': 'Velachery, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drill_closeup.jpg',
       'available': false,
     },
     {
@@ -68,7 +66,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.4,
       'reviews': 67,
       'location': 'Adyar, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drilling_machine.png',
       'available': true,
     },
     {
@@ -78,7 +76,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.8,
       'reviews': 142,
       'location': 'Mylapore, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drill_tool.jpg',
       'available': true,
     },
     {
@@ -88,7 +86,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.3,
       'reviews': 78,
       'location': 'Chromepet, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drill_closeup.jpg',
       'available': true,
     },
     {
@@ -98,7 +96,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.9,
       'reviews': 198,
       'location': 'Perambur, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drilling_machine.png',
       'available': true,
     },
     {
@@ -108,7 +106,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 92,
       'location': 'Ambattur, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drill_tool.jpg',
       'available': false,
     },
     {
@@ -118,7 +116,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.4,
       'reviews': 56,
       'location': 'Nungambakkam, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drill_closeup.jpg',
       'available': true,
     },
     {
@@ -128,7 +126,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 134,
       'location': 'Kodambakkam, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drilling_machine.png',
       'available': true,
     },
     {
@@ -138,7 +136,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.8,
       'reviews': 167,
       'location': 'Ashok Nagar, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drill_tool.jpg',
       'available': true,
     },
     {
@@ -148,7 +146,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 145,
       'location': 'Koyambedu, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drill_closeup.jpg',
       'available': true,
     },
     {
@@ -158,7 +156,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.9,
       'reviews': 212,
       'location': 'Guindy, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drilling_machine.png',
       'available': true,
     },
     {
@@ -168,7 +166,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 83,
       'location': 'Saidapet, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drill_tool.jpg',
       'available': false,
     },
     {
@@ -178,7 +176,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.3,
       'reviews': 61,
       'location': 'Tiruvanmiyur, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drill_closeup.jpg',
       'available': true,
     },
     {
@@ -188,352 +186,337 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 118,
       'location': 'Porur, Chennai',
-      'image': 'assets/images/download.jpg',
+      'image': 'assets/images/drilling_machine.png',
       'available': true,
     },
-    // Concrete Mixers
+
+    // ── Concrete Mixers ──
     {
       'category': 'Concrete Mixers',
-      'name': 'Portable Concrete Mixer',
-      'price': 1245,
+      'name': 'Electric cement mixer',
+      'price': 4500,
       'rating': 4.8,
-      'reviews': 95,
+      'reviews': 112,
       'location': 'T. Nagar, Chennai',
-      'image': 'assets/images/download (1).jpg',
+      'image': 'assets/images/real_electric_cement_mixer.png',
       'available': true,
     },
     {
       'category': 'Concrete Mixers',
-      'name': 'Electric Cement Mixer',
-      'price': 1655,
-      'rating': 4.7,
-      'reviews': 72,
+      'name': 'Diesel concrete mixer',
+      'price': 7500,
+      'rating': 4.9,
+      'reviews': 88,
       'location': 'Anna Nagar, Chennai',
-      'image': 'assets/images/download (1).jpg',
+      'image': 'assets/images/real_diesel_concrete_mixer.png',
       'available': true,
     },
     {
       'category': 'Concrete Mixers',
-      'name': 'Diesel Concrete Mixer',
-      'price': 2075,
+      'name': 'Mini concrete mixer',
+      'price': 2200,
       'rating': 4.6,
-      'reviews': 54,
+      'reviews': 64,
       'location': 'Velachery, Chennai',
-      'image': 'assets/images/download (1).jpg',
+      'image': 'assets/images/real_mini_concrete_mixer.png',
       'available': true,
     },
     {
       'category': 'Concrete Mixers',
-      'name': 'Mini Concrete Mixer',
-      'price': 835,
-      'rating': 4.5,
-      'reviews': 67,
-      'location': 'Adyar, Chennai',
-      'image': 'assets/images/download (1).jpg',
-      'available': false,
-    },
-    {
-      'category': 'Concrete Mixers',
-      'name': 'Tilting Drum Mixer',
-      'price': 1455,
+      'name': 'Tilting drum mixer',
+      'price': 5800,
       'rating': 4.7,
-      'reviews': 89,
+      'reviews': 79,
       'location': 'Mylapore, Chennai',
-      'image': 'assets/images/download (1).jpg',
+      'image': 'assets/images/real_electric_cement_mixer.png',
       'available': true,
     },
     {
       'category': 'Concrete Mixers',
-      'name': 'Reversible Mixer',
-      'price': 1865,
+      'name': 'Reversible mixer',
+      'price': 8200,
       'rating': 4.8,
       'reviews': 112,
       'location': 'Chromepet, Chennai',
-      'image': 'assets/images/download (1).jpg',
+      'image': 'assets/images/concrete_mixer.png',
       'available': true,
     },
     {
       'category': 'Concrete Mixers',
-      'name': 'Pan Mixer',
-      'price': 2245,
-      'rating': 4.6,
-      'reviews': 78,
+      'name': 'Pan mixer',
+      'price': 9500,
+      'rating': 4.9,
+      'reviews': 41,
       'location': 'Perambur, Chennai',
-      'image': 'assets/images/download (1).jpg',
+      'image': 'assets/images/drum_mixer.jpg',
       'available': true,
     },
     {
       'category': 'Concrete Mixers',
-      'name': 'Handheld Mixer',
-      'price': 495,
-      'rating': 4.4,
-      'reviews': 45,
+      'name': 'Handheld mixer',
+      'price': 1500,
+      'rating': 4.5,
+      'reviews': 130,
       'location': 'Ambattur, Chennai',
-      'image': 'assets/images/download (1).jpg',
+      'image': 'assets/images/drilling_machine.png',
       'available': true,
     },
     {
       'category': 'Concrete Mixers',
-      'name': 'Batch Mixer',
-      'price': 2875,
+      'name': 'Batch mixer',
+      'price': 12500,
       'rating': 4.9,
       'reviews': 134,
       'location': 'Nungambakkam, Chennai',
-      'image': 'assets/images/download (1).jpg',
+      'image': 'assets/images/real_electric_cement_mixer.png',
       'available': true,
     },
     {
       'category': 'Concrete Mixers',
-      'name': 'Transit Mixer',
-      'price': 4155,
+      'name': 'Drum mixer',
+      'price': 5200,
       'rating': 4.7,
-      'reviews': 67,
+      'reviews': 90,
       'location': 'Kodambakkam, Chennai',
-      'image': 'assets/images/download (1).jpg',
+      'image': 'assets/images/drum_mixer.jpg',
       'available': false,
     },
     {
       'category': 'Concrete Mixers',
-      'name': 'Self-Loading Mixer',
-      'price': 5785,
-      'rating': 4.8,
-      'reviews': 89,
+      'name': 'Self loading mixer',
+      'price': 35000,
+      'rating': 5.0,
+      'reviews': 22,
       'location': 'Ashok Nagar, Chennai',
-      'image': 'assets/images/download (1).jpg',
+      'image': 'assets/images/real_excavator.png',
       'available': true,
     },
     {
       'category': 'Concrete Mixers',
-      'name': 'Compulsor Mixer',
-      'price': 3345,
-      'rating': 4.6,
-      'reviews': 56,
-      'location': 'Koyambedu, Chennai',
-      'image': 'assets/images/download (1).jpg',
-      'available': true,
-    },
-    {
-      'category': 'Concrete Mixers',
-      'name': 'Drum Mixer',
-      'price': 1245,
-      'rating': 4.5,
-      'reviews': 72,
-      'location': 'Guindy, Chennai',
-      'image': 'assets/images/download (1).jpg',
-      'available': true,
-    },
-    {
-      'category': 'Concrete Mixers',
-      'name': 'Continuous Mixer',
-      'price': 2075,
-      'rating': 4.7,
-      'reviews': 98,
-      'location': 'Saidapet, Chennai',
-      'image': 'assets/images/download (1).jpg',
-      'available': true,
-    },
-    {
-      'category': 'Concrete Mixers',
-      'name': 'Mobile Mixer',
-      'price': 1655,
-      'rating': 4.4,
-      'reviews': 61,
-      'location': 'Tiruvanmiyur, Chennai',
-      'image': 'assets/images/download (1).jpg',
-      'available': true,
-    },
-    {
-      'category': 'Concrete Mixers',
-      'name': 'Twin Shaft Mixer',
-      'price': 3665,
+      'name': 'Compulsor mixer',
+      'price': 6800,
       'rating': 4.8,
-      'reviews': 45,
-      'location': 'Porur, Chennai',
-      'image': 'assets/images/download (1).jpg',
+      'reviews': 29,
+      'location': 'Koyambedu, Chennai',
+      'image': 'assets/images/real_mini_concrete_mixer.png',
       'available': true,
     },
     {
       'category': 'Concrete Mixers',
-      'name': 'Planetary Mixer',
-      'price': 4155,
+      'name': 'Revolving drum mixer',
+      'price': 11000,
       'rating': 4.7,
       'reviews': 38,
-      'location': 'Ashok Nagar, Chennai',
-      'image': 'assets/images/download (1).jpg',
+      'location': 'Guindy, Chennai',
+      'image': 'assets/images/real_electric_cement_mixer.png',
       'available': true,
     },
-    // Welding Machines
     {
-      'category': 'Welding Machines',
-      'name': 'MIG Welder Pro',
-      'price': 4980,
+      'category': 'Concrete Mixers',
+      'name': 'Continuous mixer',
+      'price': 18000,
+      'rating': 4.9,
+      'reviews': 98,
+      'location': 'Saidapet, Chennai',
+      'image': 'assets/images/concrete_mixer.png',
+      'available': true,
+    },
+    {
+      'category': 'Concrete Mixers',
+      'name': 'Mobile drum mixer',
+      'price': 7200,
       'rating': 4.6,
-      'reviews': 74,
+      'reviews': 47,
+      'location': 'Tiruvanmiyur, Chennai',
+      'image': 'assets/images/real_diesel_concrete_mixer.png',
+      'available': true,
+    },
+    {
+      'category': 'Concrete Mixers',
+      'name': 'Twin shaft mixer',
+      'price': 22000,
+      'rating': 5.0,
+      'reviews': 15,
+      'location': 'Porur, Chennai',
+      'image': 'assets/images/drum_mixer.jpg',
+      'available': true,
+    },
+    {
+      'category': 'Concrete Mixers',
+      'name': 'Planetary mixer',
+      'price': 25000,
+      'rating': 4.9,
+      'reviews': 18,
+      'location': 'Ashok Nagar, Chennai',
+      'image': 'assets/images/real_electric_cement_mixer.png',
+      'available': true,
+    },
+
+
+    // ── Welding Machines ──
+    {
+      'category': 'Welding Machines',
+      'name': 'Mig welder',
+      'price': 5395,
+      'rating': 4.9,
+      'reviews': 156,
       'location': 'T. Nagar, Chennai',
-      'image': 'assets/images/welding machine.jpg',
+      'image': 'assets/images/real_mig_welder.png',
       'available': true,
     },
     {
       'category': 'Welding Machines',
-      'name': 'TIG Welding Machine',
-      'price': 5815,
-      'rating': 4.8,
-      'reviews': 63,
+      'name': 'Tig welder',
+      'price': 6200,
+      'rating': 4.9,
+      'reviews': 110,
       'location': 'Anna Nagar, Chennai',
-      'image': 'assets/images/welding machine.jpg',
+      'image': 'assets/images/welding_machine.png',
       'available': true,
     },
     {
       'category': 'Welding Machines',
-      'name': 'Arc Welder',
-      'price': 3345,
-      'rating': 4.5,
-      'reviews': 89,
-      'location': 'Velachery, Chennai',
-      'image': 'assets/images/welding machine.jpg',
-      'available': true,
-    },
-    {
-      'category': 'Welding Machines',
-      'name': 'Spot Welder',
-      'price': 4155,
+      'name': 'Arc welder',
+      'price': 3500,
       'rating': 4.7,
-      'reviews': 56,
+      'reviews': 142,
+      'location': 'Velachery, Chennai',
+      'image': 'assets/images/welding_tool.jpg',
+      'available': true,
+    },
+    {
+      'category': 'Welding Machines',
+      'name': 'Spot welder',
+      'price': 7800,
+      'rating': 4.8,
+      'reviews': 45,
       'location': 'Adyar, Chennai',
-      'image': 'assets/images/welding machine.jpg',
+      'image': 'assets/images/real_mig_welder.png',
       'available': false,
     },
     {
       'category': 'Welding Machines',
-      'name': 'Stick Welder',
-      'price': 2875,
-      'rating': 4.4,
-      'reviews': 72,
-      'location': 'Mylapore, Chennai',
-      'image': 'assets/images/welding machine.jpg',
-      'available': true,
-    },
-    {
-      'category': 'Welding Machines',
-      'name': 'Flux Core Welder',
-      'price': 3665,
+      'name': 'Stick welder',
+      'price': 3200,
       'rating': 4.6,
       'reviews': 98,
+      'location': 'Mylapore, Chennai',
+      'image': 'assets/images/welding_tool.jpg',
+      'available': true,
+    },
+    {
+      'category': 'Welding Machines',
+      'name': 'Flux welder',
+      'price': 4200,
+      'rating': 4.7,
+      'reviews': 82,
       'location': 'Chromepet, Chennai',
-      'image': 'assets/images/welding machine.jpg',
+      'image': 'assets/images/welding_machine.png',
       'available': true,
     },
     {
       'category': 'Welding Machines',
-      'name': 'Plasma Cutter',
-      'price': 5785,
+      'name': 'Oxy acetylene welder',
+      'price': 4800,
       'rating': 4.8,
-      'reviews': 134,
-      'location': 'Perambur, Chennai',
-      'image': 'assets/images/welding machine.jpg',
-      'available': true,
-    },
-    {
-      'category': 'Welding Machines',
-      'name': 'Oxy-Acetylene Welder',
-      'price': 2475,
-      'rating': 4.5,
       'reviews': 67,
       'location': 'Ambattur, Chennai',
-      'image': 'assets/images/welding machine.jpg',
+      'image': 'assets/images/real_mig_welder.png',
       'available': true,
     },
     {
       'category': 'Welding Machines',
-      'name': 'Laser Welder',
-      'price': 12450,
+      'name': 'Ultra Sonic welder',
+      'price': 14500,
       'rating': 4.9,
-      'reviews': 45,
+      'reviews': 20,
+      'location': 'Perambur, Chennai',
+      'image': 'assets/images/real_mig_welder.png',
+      'available': true,
+    },
+    {
+      'category': 'Welding Machines',
+      'name': 'Induction welder',
+      'price': 18500,
+      'rating': 5.0,
+      'reviews': 14,
       'location': 'Nungambakkam, Chennai',
-      'image': 'assets/images/welding machine.jpg',
-      'available': false,
-    },
-    {
-      'category': 'Welding Machines',
-      'name': 'Resistance Welder',
-      'price': 6225,
-      'rating': 4.7,
-      'reviews': 89,
-      'location': 'Kodambakkam, Chennai',
-      'image': 'assets/images/welding machine.jpg',
+      'image': 'assets/images/welding_tool.jpg',
       'available': true,
     },
     {
       'category': 'Welding Machines',
-      'name': 'Ultrasonic Welder',
-      'price': 8665,
-      'rating': 4.6,
-      'reviews': 56,
-      'location': 'Ashok Nagar, Chennai',
-      'image': 'assets/images/welding machine.jpg',
-      'available': true,
-    },
-    {
-      'category': 'Welding Machines',
-      'name': 'Induction Welder',
-      'price': 7455,
-      'rating': 4.5,
-      'reviews': 78,
-      'location': 'Koyambedu, Chennai',
-      'image': 'assets/images/welding machine.jpg',
-      'available': true,
-    },
-    {
-      'category': 'Welding Machines',
-      'name': 'Seam Welder',
-      'price': 5365,
-      'rating': 4.7,
-      'reviews': 92,
-      'location': 'Guindy, Chennai',
-      'image': 'assets/images/welding machine.jpg',
-      'available': true,
-    },
-    {
-      'category': 'Welding Machines',
-      'name': 'Projection Welder',
-      'price': 4575,
-      'rating': 4.4,
-      'reviews': 61,
-      'location': 'Saidapet, Chennai',
-      'image': 'assets/images/welding machine.jpg',
-      'available': true,
-    },
-    {
-      'category': 'Welding Machines',
-      'name': 'Electron Beam Welder',
-      'price': 16550,
+      'name': 'Seam welder',
+      'price': 16000,
       'rating': 4.8,
-      'reviews': 34,
+      'reviews': 18,
+      'location': 'Kodambakkam, Chennai',
+      'image': 'assets/images/real_mig_welder.png',
+      'available': true,
+    },
+    {
+      'category': 'Welding Machines',
+      'name': 'Projection welder',
+      'price': 13500,
+      'rating': 4.7,
+      'reviews': 22,
+      'location': 'Saidapet, Chennai',
+      'image': 'assets/images/welding_machine.png',
+      'available': true,
+    },
+    {
+      'category': 'Welding Machines',
+      'name': 'Electron beam welder',
+      'price': 45000,
+      'rating': 5.0,
+      'reviews': 9,
       'location': 'Tiruvanmiyur, Chennai',
-      'image': 'assets/images/welding machine.jpg',
+      'image': 'assets/images/real_mig_welder.png',
       'available': false,
     },
     {
       'category': 'Welding Machines',
-      'name': 'Friction Welder',
-      'price': 9125,
-      'rating': 4.6,
-      'reviews': 45,
+      'name': 'Friction welder',
+      'price': 28000,
+      'rating': 4.9,
+      'reviews': 12,
       'location': 'Porur, Chennai',
-      'image': 'assets/images/welding machine.jpg',
+      'image': 'assets/images/welding_tool.jpg',
       'available': true,
     },
-    // Generators
+
+    // ── Generators ──
     {
       'category': 'Generators',
-      'name': 'Industrial Generator',
-      'price': 6225,
-      'rating': 4.5,
-      'reviews': 62,
+      'name': 'Diesel Generator 5kW',
+      'price': 9960,
+      'rating': 4.6,
+      'reviews': 78,
       'location': 'T. Nagar, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/real_generator.png',
       'available': true,
     },
+    {
+      'category': 'Generators',
+      'name': 'Silent Diesel Generator 10kVA',
+      'price': 15500,
+      'rating': 4.9,
+      'reviews': 94,
+      'location': 'Anna Nagar, Chennai',
+      'image': 'assets/images/generator.png',
+      'available': true,
+    },
+    {
+      'category': 'Generators',
+      'name': 'Heavy Duty Industrial Generator 50kVA',
+      'price': 32000,
+      'rating': 5.0,
+      'reviews': 31,
+      'location': 'Velachery, Chennai',
+      'image': 'assets/images/generator_tool.jpg',
+      'available': true,
+    },
+
     {
       'category': 'Generators',
       'name': 'Portable Power Generator',
@@ -541,7 +524,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 98,
       'location': 'Anna Nagar, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/generator_tool.jpg',
       'available': false,
     },
     {
@@ -551,7 +534,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 78,
       'location': 'Velachery, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/generator.png',
       'available': true,
     },
     {
@@ -561,7 +544,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 56,
       'location': 'Adyar, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/generator_tool.jpg',
       'available': true,
     },
     {
@@ -571,7 +554,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.8,
       'reviews': 134,
       'location': 'Mylapore, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/generator.png',
       'available': true,
     },
     {
@@ -581,7 +564,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 89,
       'location': 'Chromepet, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/generator_tool.jpg',
       'available': true,
     },
     {
@@ -591,7 +574,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.9,
       'reviews': 67,
       'location': 'Perambur, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/generator.png',
       'available': true,
     },
     {
@@ -601,7 +584,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 45,
       'location': 'Ambattur, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/generator_tool.jpg',
       'available': false,
     },
     {
@@ -611,7 +594,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 112,
       'location': 'Nungambakkam, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/generator.png',
       'available': true,
     },
     {
@@ -621,7 +604,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 56,
       'location': 'Kodambakkam, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/generator_tool.jpg',
       'available': true,
     },
     {
@@ -631,7 +614,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 78,
       'location': 'Ashok Nagar, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/generator.png',
       'available': true,
     },
     {
@@ -641,7 +624,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.4,
       'reviews': 61,
       'location': 'Koyambedu, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/generator_tool.jpg',
       'available': true,
     },
     {
@@ -651,7 +634,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 92,
       'location': 'Guindy, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/generator.png',
       'available': true,
     },
     {
@@ -661,7 +644,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.8,
       'reviews': 34,
       'location': 'Saidapet, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/generator_tool.jpg',
       'available': true,
     },
     {
@@ -671,7 +654,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 23,
       'location': 'Tiruvanmiyur, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/generator.png',
       'available': false,
     },
     {
@@ -681,10 +664,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 45,
       'location': 'Porur, Chennai',
-      'image': 'assets/images/download (2).jpg',
+      'image': 'assets/images/generator_tool.jpg',
       'available': true,
     },
-    // Ladders
+
+    // ── Ladders ──
     {
       'category': 'Ladders',
       'name': 'Aluminum Extension Ladder',
@@ -692,7 +676,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 112,
       'location': 'T. Nagar, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/ladder.png',
       'available': true,
     },
     {
@@ -702,7 +686,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 87,
       'location': 'Anna Nagar, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/fiberglass_step_ladder.jpg',
       'available': true,
     },
     {
@@ -712,7 +696,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 134,
       'location': 'Velachery, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/ladder.png',
       'available': true,
     },
     {
@@ -722,7 +706,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 98,
       'location': 'Adyar, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/platform_ladder.jpg',
       'available': false,
     },
     {
@@ -732,7 +716,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 67,
       'location': 'Mylapore, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/ladder.png',
       'available': true,
     },
     {
@@ -742,7 +726,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 89,
       'location': 'Chromepet, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/rolling_ladder.jpg',
       'available': true,
     },
     {
@@ -752,7 +736,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.4,
       'reviews': 145,
       'location': 'Perambur, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/ladder.png',
       'available': true,
     },
     {
@@ -762,7 +746,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.8,
       'reviews': 56,
       'location': 'Ambattur, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/scaffold_ladder.jpg',
       'available': true,
     },
     {
@@ -772,7 +756,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 112,
       'location': 'Nungambakkam, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/ladder.png',
       'available': true,
     },
     {
@@ -782,7 +766,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 78,
       'location': 'Kodambakkam, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/orchard_ladder.jpg',
       'available': false,
     },
     {
@@ -792,7 +776,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 92,
       'location': 'Ashok Nagar, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/ladder.png',
       'available': true,
     },
     {
@@ -802,7 +786,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.4,
       'reviews': 61,
       'location': 'Koyambedu, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/pool_ladder.jpg',
       'available': true,
     },
     {
@@ -812,7 +796,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 45,
       'location': 'Guindy, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/ladder.png',
       'available': true,
     },
     {
@@ -822,7 +806,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 134,
       'location': 'Saidapet, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/folding_ladder.jpg',
       'available': true,
     },
     {
@@ -832,7 +816,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 89,
       'location': 'Tiruvanmiyur, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/ladder.png',
       'available': true,
     },
     {
@@ -842,10 +826,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 67,
       'location': 'Porur, Chennai',
-      'image': 'assets/images/download (3).jpg',
+      'image': 'assets/images/articulated_ladder.jpg',
       'available': false,
     },
-    // Cutting Tools
+
+    // ── Cutting Tools ──
     {
       'category': 'Cutting Tools',
       'name': 'Angle Grinder',
@@ -853,7 +838,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 145,
       'location': 'T. Nagar, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/angle_grinder.jpg',
       'available': true,
     },
     {
@@ -863,7 +848,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 98,
       'location': 'Anna Nagar, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/cutting_tool.png',
       'available': true,
     },
     {
@@ -873,7 +858,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 78,
       'location': 'Velachery, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/jigsaw.jpg',
       'available': false,
     },
     {
@@ -883,7 +868,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 112,
       'location': 'Adyar, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/angle_grinder.jpg',
       'available': true,
     },
     {
@@ -893,7 +878,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.8,
       'reviews': 134,
       'location': 'Mylapore, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/cutting_tool.png',
       'available': true,
     },
     {
@@ -903,7 +888,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 89,
       'location': 'Chromepet, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/miter_saw.jpg',
       'available': true,
     },
     {
@@ -913,7 +898,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 67,
       'location': 'Perambur, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/band_saw.jpg',
       'available': true,
     },
     {
@@ -923,7 +908,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 56,
       'location': 'Ambattur, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/cutting_tool.png',
       'available': false,
     },
     {
@@ -933,7 +918,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 92,
       'location': 'Nungambakkam, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/tile_saw.jpg',
       'available': true,
     },
     {
@@ -943,7 +928,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 78,
       'location': 'Kodambakkam, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/angle_grinder.jpg',
       'available': true,
     },
     {
@@ -953,7 +938,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.4,
       'reviews': 145,
       'location': 'Ashok Nagar, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/cutting_tool.png',
       'available': true,
     },
     {
@@ -963,7 +948,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 112,
       'location': 'Koyambedu, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/oscillating_tool.jpg',
       'available': true,
     },
     {
@@ -973,8 +958,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 89,
       'location': 'Guindy, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/router.jpg',
       'available': false,
+    },
+    {
+      'category': 'Cutting Tools',
+      'name': 'Planer and jointer',
+      'price': 3600,
+      'rating': 4.7,
+      'reviews': 84,
+      'location': 'Saidapet, Chennai',
+      'image': 'assets/images/real_planer_jointer.png',
+      'available': true,
     },
     {
       'category': 'Cutting Tools',
@@ -983,7 +978,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 67,
       'location': 'Saidapet, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/planer.jpg',
       'available': true,
     },
     {
@@ -993,7 +988,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 56,
       'location': 'Tiruvanmiyur, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/jointer.jpg',
       'available': true,
     },
     {
@@ -1003,10 +998,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.8,
       'reviews': 45,
       'location': 'Porur, Chennai',
-      'image': 'assets/images/download (4).jpg',
+      'image': 'assets/images/thickness_planer.jpg',
       'available': true,
     },
-    // Safety Equipment
+
+    // ── Safety Equipment ──
     {
       'category': 'Safety Equipment',
       'name': 'Safety Helmet Set',
@@ -1014,7 +1010,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.8,
       'reviews': 234,
       'location': 'T. Nagar, Chennai',
-      'image': 'assets/images/images.jpg',
+      'image': 'assets/images/safety_helmet_set.jpg',
       'available': true,
     },
     {
@@ -1024,7 +1020,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 167,
       'location': 'Anna Nagar, Chennai',
-      'image': 'assets/images/images.jpg',
+      'image': 'assets/images/safety_goggles.jpg',
       'available': true,
     },
     {
@@ -1034,19 +1030,20 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 189,
       'location': 'Velachery, Chennai',
-      'image': 'assets/images/images.jpg',
+      'image': 'assets/images/safety_gloves.jpg',
       'available': true,
     },
     {
       'category': 'Safety Equipment',
       'name': 'Safety Boots',
-      'price': 835,
-      'rating': 4.7,
-      'reviews': 145,
+      'price': 950,
+      'rating': 4.9,
+      'reviews': 210,
       'location': 'Adyar, Chennai',
-      'image': 'assets/images/images.jpg',
-      'available': false,
+      'image': 'assets/images/real_safety_boots.png',
+      'available': true,
     },
+
     {
       'category': 'Safety Equipment',
       'name': 'Safety Vest',
@@ -1054,7 +1051,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 198,
       'location': 'Mylapore, Chennai',
-      'image': 'assets/images/images.jpg',
+      'image': 'assets/images/safety_vest.jpg',
       'available': true,
     },
     {
@@ -1064,7 +1061,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.4,
       'reviews': 134,
       'location': 'Chromepet, Chennai',
-      'image': 'assets/images/images.jpg',
+      'image': 'assets/images/ear_protection.jpg',
       'available': true,
     },
     {
@@ -1074,7 +1071,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 112,
       'location': 'Perambur, Chennai',
-      'image': 'assets/images/images.jpg',
+      'image': 'assets/images/face_shield.jpg',
       'available': true,
     },
     {
@@ -1084,7 +1081,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 167,
       'location': 'Ambattur, Chennai',
-      'image': 'assets/images/images.jpg',
+      'image': 'assets/images/respirator_mask.jpg',
       'available': true,
     },
     {
@@ -1094,7 +1091,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.8,
       'reviews': 89,
       'location': 'Nungambakkam, Chennai',
-      'image': 'assets/images/images.jpg',
+      'image': 'assets/images/safety_harness.jpg',
       'available': true,
     },
     {
@@ -1104,7 +1101,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 145,
       'location': 'Kodambakkam, Chennai',
-      'image': 'assets/images/images.jpg',
+      'image': 'assets/images/knee_pads.jpg',
       'available': false,
     },
     {
@@ -1114,7 +1111,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 178,
       'location': 'Ashok Nagar, Chennai',
-      'image': 'assets/images/images.jpg',
+      'image': 'assets/images/safety_glasses.jpg',
       'available': true,
     },
     {
@@ -1124,7 +1121,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 156,
       'location': 'Koyambedu, Chennai',
-      'image': 'assets/images/images.jpg',
+      'image': 'assets/images/hard_hat.jpg',
       'available': true,
     },
     {
@@ -1134,7 +1131,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.5,
       'reviews': 134,
       'location': 'Guindy, Chennai',
-      'image': 'assets/images/images.jpg',
+      'image': 'assets/images/high_vis_jacket.jpg',
       'available': true,
     },
     {
@@ -1144,7 +1141,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.6,
       'reviews': 112,
       'location': 'Saidapet, Chennai',
-      'image': 'assets/images/images.jpg',
+      'image': 'assets/images/steel_toe_shoes.jpg',
       'available': true,
     },
     {
@@ -1154,7 +1151,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.4,
       'reviews': 198,
       'location': 'Tiruvanmiyur, Chennai',
-      'image': 'assets/images/images.jpg',
+      'image': 'assets/images/dust_mask.jpg',
       'available': true,
     },
     {
@@ -1164,163 +1161,244 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'rating': 4.7,
       'reviews': 89,
       'location': 'Porur, Chennai',
-      'image': 'assets/images/images.jpg',
+      'image': 'assets/images/welding_helmet.jpg',
+      'available': false,
+    },
+
+    // ── Excavation Tools ──
+    {
+      'category': 'Excavation Tools',
+      'name': 'Mini Excavator',
+      'price': 29050,
+      'rating': 4.9,
+      'reviews': 45,
+      'location': 'T. Nagar, Chennai',
+      'image': 'assets/images/real_excavator.png',
+      'available': true,
+    },
+
+    {
+      'category': 'Excavation Tools',
+      'name': 'Backhoe Loader',
+      'price': 35000,
+      'rating': 4.8,
+      'reviews': 32,
+      'location': 'Anna Nagar, Chennai',
+      'image': 'assets/images/excavator_tool.jpg',
+      'available': true,
+    },
+    {
+      'category': 'Excavation Tools',
+      'name': 'Trench Digger',
+      'price': 5400,
+      'rating': 4.6,
+      'reviews': 19,
+      'location': 'Velachery, Chennai',
+      'image': 'assets/images/excavator.jpg',
+      'available': true,
+    },
+    {
+      'category': 'Excavation Tools',
+      'name': 'Skid Steer Loader',
+      'price': 8500,
+      'rating': 4.7,
+      'reviews': 28,
+      'location': 'Adyar, Chennai',
+      'image': 'assets/images/excavator_tool.jpg',
       'available': false,
     },
   ];
 
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  List<Map<String, dynamic>> get _filteredTools {
+    final categoryName = _categories[_selectedCategory]['name'];
+    return _tools.where((tool) {
+      final matchesCategory = tool['category'] == categoryName;
+      final matchesSearch = _searchQuery.isEmpty ||
+          tool['name'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          tool['category'].toString().toLowerCase().contains(_searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-            child: const Text(
-              'Categories',
-              style: TextStyle(
-                color: AppTheme.primaryBlack,
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
+    return Scaffold(
+      backgroundColor: const Color(0xFF141414),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 12),
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (val) => setState(() => _searchQuery = val),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Search equipment (e.g. Electric cement mixer, MIG welder)...',
+                  hintStyle: const TextStyle(fontSize: 12, color: AppTheme.mediumGray),
+                  prefixIcon: const Icon(Icons.search, color: AppTheme.primaryYellow),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 18, color: Colors.white70),
+                          onPressed: () => setState(() {
+                            _searchController.clear();
+                            _searchQuery = '';
+                          }),
+                        )
+                      : null,
+                  fillColor: const Color(0xFF1E1E1E),
+                  filled: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 20),
-          // Category tabs
-          SizedBox(
-            height: 100,
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              scrollDirection: Axis.horizontal,
-              itemCount: _categories.length,
-              itemBuilder: (context, i) {
-                final selected = i == _selectedCategory;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedCategory = i),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 88,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? AppTheme.primaryYellow.withOpacity(0.15)
-                          : AppTheme.primaryWhite,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
+            const SizedBox(height: 14),
+
+            // Category tabs
+            SizedBox(
+              height: 96,
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                scrollDirection: Axis.horizontal,
+                itemCount: _categories.length,
+                itemBuilder: (context, i) {
+                  final selected = i == _selectedCategory;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedCategory = i),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 88,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
                         color: selected
-                            ? AppTheme.primaryYellow
-                            : AppTheme.mediumGray.withOpacity(0.3),
-                        width: selected ? 1.5 : 1,
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _categories[i]['icon'] as IconData,
+                            ? AppTheme.primaryYellow.withOpacity(0.15)
+                            : const Color(0xFF1E1E1E),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
                           color: selected
                               ? AppTheme.primaryYellow
-                              : AppTheme.mediumGray,
-                          size: 26,
+                              : Colors.white12,
+                          width: selected ? 1.8 : 1,
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          _categories[i]['name'] as String,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: selected
-                                ? AppTheme.primaryYellow
-                                : AppTheme.mediumGray,
-                            fontSize: 10,
-                            fontWeight: selected
-                                ? FontWeight.w600
-                                : FontWeight.w400,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: SizedBox(
+                              width: 36,
+                              height: 36,
+                              child: AppImage(
+                                imageUrl: _categories[i]['image'] as String,
+                                fit: BoxFit.cover,
+                                errorWidget: Icon(
+                                  _categories[i]['icon'] as IconData,
+                                  color: selected
+                                      ? AppTheme.primaryYellow
+                                      : AppTheme.mediumGray,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                          const SizedBox(height: 6),
+                          Text(
+                            _categories[i]['name'] as String,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: selected
+                                  ? AppTheme.primaryYellow
+                                  : Colors.white70,
+                              fontSize: 10,
+                              fontWeight: selected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              '${_filteredTools.length} tools found',
-              style: const TextStyle(color: AppTheme.mediumGray, fontSize: 13),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
-                childAspectRatio: 0.68,
+                  );
+                },
               ),
-              itemCount: _filteredTools.length,
-              itemBuilder: (context, i) {
-                final tool = _filteredTools[i];
-                return _buildToolCard(tool);
-              },
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${_filteredTools.length} Premium Tools Available',
+                    style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    _categories[_selectedCategory]['name'] as String,
+                    style: const TextStyle(color: AppTheme.primaryYellow, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Tools Grid
+            Expanded(
+              child: GridView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 14,
+                  childAspectRatio: 0.53,
+                ),
+                itemCount: _filteredTools.length,
+                itemBuilder: (context, i) {
+                  final tool = _filteredTools[i];
+                  return _buildToolCard(tool);
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
+
   Widget _buildToolCard(Map<String, dynamic> tool) {
     return GestureDetector(
-      onTap: () {
-        final toolModel = ToolModel(
-          id: tool['name'].toString().toLowerCase().replaceAll(' ', '-'),
-          name: tool['name'] as String,
-          category: tool['category'] as String,
-          description:
-              'Professional ${tool['category']} available for rent. High-quality equipment maintained in excellent condition.',
-          pricePerDay: (tool['price'] as num).toDouble(),
-          rating: (tool['rating'] as num).toDouble(),
-          reviewCount: tool['reviews'] as int,
-          imageUrl: tool['image'] as String,
-          imageUrls: [tool['image'] as String],
-          isAvailable: tool['available'] as bool,
-          vendor: VendorModel(
-            id: 'vendor-${tool['name'].toString().toLowerCase().replaceAll(' ', '-')}',
-            name: 'Tool Rental Co.',
-            imageUrl: 'assets/images/download.jpg',
-            rating: 4.5,
-            reviewCount: 120,
-            location: tool['location'] as String,
-            distance: 2.5,
-          ),
-          specifications: const [
-            'Professional Grade',
-            'Well Maintained',
-            'Easy to Use',
-            'Safety Certified',
-          ],
-          location: tool['location'] as String,
-        );
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => BookingScreen(tool: toolModel),
-          ),
-        );
-      },
+      onTap: () => _navigateToBooking(tool),
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.primaryWhite,
+          color: const Color(0xFF1E1E1E),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.mediumGray.withOpacity(0.3)),
+          border: Border.all(color: AppTheme.primaryYellow.withOpacity(0.2)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1333,9 +1411,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     top: Radius.circular(16),
                   ),
                   child: AspectRatio(
-                    aspectRatio: 1.1,
+                    aspectRatio: 1.25,
                     child: AppImage(
                       imageUrl: tool['image'] as String,
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
@@ -1344,20 +1423,17 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     top: 8,
                     left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(
                         color: AppTheme.accentRed,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Text(
-                        'Unavailable',
+                        'Rented Out',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -1366,86 +1442,105 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   top: 8,
                   right: 8,
                   child: Container(
-                    width: 32,
-                    height: 32,
+                    width: 28,
+                    height: 28,
                     decoration: const BoxDecoration(
-                      color: Colors.white,
+                      color: Colors.black54,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.favorite_border,
-                      color: AppTheme.accentRed,
-                      size: 16,
+                      color: AppTheme.primaryYellow,
+                      size: 15,
                     ),
                   ),
                 ),
               ],
             ),
-            // Text content
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    tool['name'] as String,
-                    style: const TextStyle(
-                      color: AppTheme.primaryBlack,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+
+            // Card Text Details
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tool['name'] as String,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.star_rounded,
-                        color: AppTheme.primaryYellow,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        '${tool['rating']} (${tool['reviews']})',
-                        style: const TextStyle(
-                          color: AppTheme.mediumGray,
-                          fontSize: 11,
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        const Icon(Icons.star_rounded, color: AppTheme.primaryYellow, size: 13),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${tool['rating']} (${tool['reviews']})',
+                          style: const TextStyle(color: Colors.white60, fontSize: 10),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '₹${tool['price']}/day',
-                        style: const TextStyle(
-                          color: AppTheme.primaryYellow,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on_outlined,
-                            color: AppTheme.mediumGray,
-                            size: 11,
-                          ),
-                          Text(
+                        const Spacer(),
+                        const Icon(Icons.location_on_outlined, color: AppTheme.mediumGray, size: 10),
+                        Expanded(
+                          child: Text(
                             tool['location'] as String,
-                            style: const TextStyle(
-                              color: AppTheme.mediumGray,
-                              fontSize: 10,
-                            ),
+                            style: const TextStyle(color: AppTheme.mediumGray, fontSize: 9),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'High-performance ${tool['category']} ready for rental with site delivery compliance.',
+                      style: const TextStyle(color: Colors.white54, fontSize: 10, height: 1.2),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Rate:', style: TextStyle(color: AppTheme.mediumGray, fontSize: 10)),
+                        Text(
+                          '₹${tool['price']}/day',
+                          style: const TextStyle(
+                            color: AppTheme.primaryYellow,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Rent Now Prominent Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 32,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryYellow,
+                          foregroundColor: AppTheme.primaryBlack,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: EdgeInsets.zero,
+                          elevation: 2,
+                        ),
+                        onPressed: () => _navigateToBooking(tool),
+                        child: const Text(
+                          'Rent Now ⚡',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                        ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -1453,4 +1548,41 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       ),
     );
   }
+
+  void _navigateToBooking(Map<String, dynamic> tool) {
+    final toolModel = ToolModel(
+      id: tool['name'].toString().toLowerCase().replaceAll(' ', '-'),
+      name: tool['name'] as String,
+      category: tool['category'] as String,
+      description: 'Professional ${tool['category']} available for rent. High-quality heavy equipment maintained in excellent condition with full site safety clearance.',
+      pricePerDay: (tool['price'] as num).toDouble(),
+      rating: (tool['rating'] as num).toDouble(),
+      reviewCount: tool['reviews'] as int,
+      imageUrl: tool['image'] as String,
+      imageUrls: [tool['image'] as String],
+      isAvailable: tool['available'] as bool,
+      vendor: VendorModel(
+        id: 'vendor-${tool['name'].toString().toLowerCase().replaceAll(' ', '-')}',
+        name: 'BuildRight Rentals',
+        imageUrl: 'assets/images/vendor_logo.jpg',
+        rating: 4.8,
+        reviewCount: 180,
+        location: tool['location'] as String,
+        distance: 2.5,
+      ),
+      specifications: const [
+        'Professional Grade',
+        'Site Safety Certified',
+        '24/7 Field Maintenance Support',
+      ],
+      location: tool['location'] as String,
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BookingScreen(tool: toolModel),
+      ),
+    );
+  }
 }
+

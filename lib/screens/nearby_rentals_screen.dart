@@ -4,6 +4,7 @@ import '../models/tool_model.dart';
 import '../themes/app_theme.dart';
 import '../widgets/vendor_card.dart';
 import '../widgets/tool_card.dart';
+import '../widgets/dark_location_map.dart';
 import 'booking_screen.dart';
 
 class NearbyRentalsScreen extends StatefulWidget {
@@ -19,83 +20,19 @@ class _NearbyRentalsScreenState extends State<NearbyRentalsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Nearby Rentals'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.map_outlined),
-            onPressed: () {
-              // Show map view
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
-          // Map placeholder
-          Container(
-            height: 200,
-            decoration: BoxDecoration(
-              color: AppTheme.lightGray,
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-            ),
-            child: Stack(
-              children: [
-                // Mock map background
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppTheme.lightGray,
-                        AppTheme.mediumGray.withOpacity(0.3),
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                ),
-                // Map markers
-                ...DummyData.vendors.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  return Positioned(
-                    left: 50 + (index * 80),
-                    top: 60 + (index * 30 % 80),
-                    child: GestureDetector(
-                      onTap: () {
-                        // Scroll to vendor
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryYellow,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.primaryBlack.withOpacity(0.2),
-                              blurRadius: 8,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.location_on,
-                          color: AppTheme.primaryBlack,
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-                // Current location marker
-                const Positioned(
-                  left: 150,
-                  top: 100,
-                  child: Icon(
-                    Icons.my_location,
-                    color: AppTheme.accentBlue,
-                    size: 32,
-                  ),
-                ),
-              ],
+          const Padding(
+            padding: EdgeInsets.all(12.0),
+            child: DarkLocationMap(
+              height: 260,
+              title: 'Nearby Equipment & Shop Map',
+              showCategoryFilter: true,
+              showLegend: true,
             ),
           ),
+
           // Vendor list
           Expanded(
             child: ListView.builder(

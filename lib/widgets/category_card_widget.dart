@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../themes/app_theme.dart';
 import '../models/tool_model.dart';
+import 'app_image.dart';
 
 class CategoryCard extends StatelessWidget {
   final CategoryModel category;
@@ -14,16 +15,19 @@ class CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.primaryWhite,
+          color: isDark ? AppTheme.darkGray : AppTheme.primaryWhite,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.mediumGray.withOpacity(0.3)),
+          border: Border.all(
+            color: isDark ? Colors.white.withOpacity(0.1) : AppTheme.mediumGray.withOpacity(0.3),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withOpacity(isDark ? 0.25 : 0.08),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -32,17 +36,23 @@ class CategoryCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryYellow.withOpacity(0.1),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              ),
-              child: Center(
-                child: Text(
-                  category.icon,
-                  style: const TextStyle(fontSize: 28),
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: SizedBox(
+                height: 65,
+                width: double.infinity,
+                child: AppImage(
+                  imageUrl: category.imageUrl,
+                  fit: BoxFit.cover,
+                  errorWidget: Container(
+                    color: AppTheme.primaryYellow.withOpacity(0.15),
+                    child: Center(
+                      child: Text(
+                        category.icon,
+                        style: const TextStyle(fontSize: 28),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),

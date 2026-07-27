@@ -7,9 +7,16 @@ import '../models/tool_model.dart';
 import '../themes/app_theme.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/app_image.dart';
+import '../widgets/dark_location_map.dart';
 import '../config/api_config.dart';
 import '../dummy_data/dummy_data.dart';
-import 'payment_screen.dart'; // ✅ direct import
+import 'payment_screen.dart';
+
+
+
+
+
+
 
 class BookingScreen extends StatefulWidget {
   final ToolModel tool;
@@ -321,17 +328,33 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
               ),
             const SizedBox(height: 24),
+
+            // Live Location & Equipment Delivery Map
+            Text(
+              'Equipment Delivery & Shop Location Map',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const DarkLocationMap(
+              height: 280,
+              showCategoryFilter: true,
+              showLegend: true,
+            ),
+            const SizedBox(height: 24),
+
             Text(
               'Price Breakdown',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.black87,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: AppTheme.cardDecoration(),
+              decoration: AppTheme.cardDecoration(context: context),
               child: Column(
                 children: [
                   _buildPriceRow('Daily Rate',
@@ -357,14 +380,13 @@ class _BookingScreenState extends State<BookingScreen> {
             Text(
               'Payment Method',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.black87,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: AppTheme.cardDecoration(),
+              decoration: AppTheme.cardDecoration(context: context),
               child: Column(
                 children: [
                   RadioListTile<String>(
@@ -524,20 +546,22 @@ class _BookingScreenState extends State<BookingScreen> {
 
   Widget _buildPriceRow(String label, String value,
       {bool isBold = false, Color? color}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final defaultColor = isDark ? AppTheme.primaryWhite : AppTheme.primaryBlack;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.black87,
+                color: defaultColor,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
               ),
         ),
         Text(
           value,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: color ?? Colors.black87,
+                color: color ?? defaultColor,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
               ),
         ),

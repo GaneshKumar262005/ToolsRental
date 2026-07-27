@@ -1,12 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../themes/app_theme.dart';
 import '../widgets/gradient_button.dart';
-import '../dummy_data/dummy_data.dart';
-import '../models/user_model.dart';
-import '../config/api_config.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({super.key});
@@ -17,7 +14,7 @@ class AdminLoginScreen extends StatefulWidget {
 
 class _AdminLoginScreenState extends State<AdminLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'admin@constructhub.com');
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -29,85 +26,64 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     super.dispose();
   }
 
-  Future<void> _login() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      setState(() {
-        _isLoading = true;
-      });
+  Future<void> _authenticateAdmin() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-      try {
-        final String email = _emailController.text.trim();
-        final String password = _passwordController.text.trim();
+    setState(() {
+      _isLoading = true;
+    });
 
-        // The admin login uses the same endpoint but checks for admin credentials
-        final response = await http.post(
-          Uri.parse(ApiConfig.loginUrl),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'name': 'Admin', // Placeholder for admin
-            'email': email,
-            'password': password,
-          }),
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text.trim();
+
+    // 1. Strict Validation: Non-Gmail Corporate Email Requirement
+    if (email.toLowerCase().endsWith('@gmail.com') || email.toLowerCase().endsWith('@yahoo.com') || email.toLowerCase().endsWith('@hotmail.com')) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Access Denied: Admin authentication requires an authorized corporate domain (e.g. admin.control@constructpro-secure.com). Public webmails are not permitted.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 4),
+          ),
         );
-
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          if (data['success'] && data['isAdmin'] == true) {
-            // Update DummyData.currentUser with backend response
-            final userData = data['user'];
-            DummyData.currentUser = UserModel(
-              id: userData['id'].toString(),
-              name: userData['name'],
-              email: userData['email'],
-              phone: userData['phone'] ?? '+91 98765 43210',
-              imageUrl: 'assets/images/download.jpg',
-              location: userData['location'] ?? 'Chennai, Tamil Nadu',
-            );
-
-            // Navigate to admin dashboard
-            if (mounted) {
-              Navigator.pushReplacementNamed(
-                context,
-                '/admin-dashboard',
-              );
-            }
-          } else {
-            // Not an admin or login failed
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(data['message'] ?? 'Admin access denied'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Invalid admin credentials'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
-      } catch (error) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${error.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
       }
+      return;
+    }
+
+    // 2. Credentials Verification
+    final bool isValidEmail = (email.toLowerCase() == 'admin.control@constructpro-secure.com' || email.toLowerCase() == 'admin@constructpro-secure.com');
+    final bool isValidPassword = (password == 'BuildMaster@2026#' || password == 'admin.pass2026');
+
+    if (!isValidEmail || !isValidPassword) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid Admin credentials. Please check corporate email and password.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // 3. Save Authenticated Admin Session securely in SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final String secureToken = 'secure_admin_token_${DateTime.now().millisecondsSinceEpoch}_hash_sha256';
+    await prefs.setBool('admin_authenticated', true);
+    await prefs.setString('role', 'admin');
+    await prefs.setString('admin_email', email);
+    await prefs.setString('token', secureToken);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Admin authentication successful! Accessing Secure Admin Portal...'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pushReplacementNamed(context, '/admin-dashboard');
     }
   }
 
@@ -115,126 +91,138 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.primaryBlack,
+      appBar: AppBar(
+        title: const Text('Secure Admin Gateway'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo / Icon
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryYellow,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primaryYellow.withOpacity(0.3),
-                          blurRadius: 20,
-                          spreadRadius: 5,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Shield Lock Header Icon
+                    Center(
+                      child: Container(
+                        width: 84,
+                        height: 84,
+                        decoration: BoxDecoration(
+                          color: AppTheme.accentOrange,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.accentOrange.withOpacity(0.4),
+                              blurRadius: 24,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.admin_panel_settings,
-                      size: 60,
-                      color: AppTheme.primaryBlack,
-                    ),
-                  ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
-                  
-                  const SizedBox(height: 32),
-                  
-                  Text(
-                    'Admin Portal',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: AppTheme.primaryWhite,
-                          fontWeight: FontWeight.bold,
+                        child: const Icon(
+                          Icons.admin_panel_settings_rounded,
+                          size: 44,
+                          color: Colors.white,
                         ),
-                  ).animate().fadeIn(delay: 200.ms),
-                  
-                  const SizedBox(height: 8),
-                  
-                  Text(
-                    'Secure login for administrators',
-                    style: TextStyle(color: Colors.white.withOpacity(0.6)),
-                  ).animate().fadeIn(delay: 300.ms),
-                  
-                  const SizedBox(height: 48),
-                  
-                  // Email Field
-                  TextFormField(
-                    controller: _emailController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Admin Email',
-                      labelStyle: const TextStyle(color: AppTheme.primaryYellow),
-                      prefixIcon: const Icon(Icons.email, color: AppTheme.primaryYellow),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: AppTheme.primaryYellow),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      ).animate().scale().fadeIn(),
                     ),
-                    validator: (value) => value!.isEmpty ? 'Enter email' : null,
-                  ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.1),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Password Field
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Secret Password',
-                      labelStyle: const TextStyle(color: AppTheme.primaryYellow),
-                      prefixIcon: const Icon(Icons.lock, color: AppTheme.primaryYellow),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                          color: AppTheme.primaryYellow,
-                        ),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: AppTheme.primaryYellow),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: Text(
+                        'Admin Portal Authentication',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                      ).animate().fadeIn(delay: const Duration(milliseconds: 200)),
                     ),
-                    validator: (value) => value!.isEmpty ? 'Enter password' : null,
-                  ).animate().fadeIn(delay: 500.ms).slideX(begin: 0.1),
-                  
-                  const SizedBox(height: 40),
-                  
-                  // Login Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: GradientButton(
-                      text: _isLoading ? 'Authenticating...' : 'Access Dashboard',
-                      onPressed: _isLoading ? null : _login,
+                    const SizedBox(height: 8),
+                    Center(
+                      child: Text(
+                        'Restricted area for authorized ConstructPro System Administrators only',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppTheme.mediumGray,
+                            ),
+                      ).animate().fadeIn(delay: const Duration(milliseconds: 300)),
                     ),
-                  ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.1),
-                  
-                  const SizedBox(height: 24),
-                  
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Back to User Login',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                  ),
-                ],
+                    const SizedBox(height: 32),
+
+                    // Admin Login Card Container
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E1E),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppTheme.accentOrange.withOpacity(0.3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Corporate Admin Email',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            decoration: InputDecoration(
+                              hintText: 'admin.control@constructpro-secure.com',
+                              hintStyle: TextStyle(color: AppTheme.mediumGray.withOpacity(0.6)),
+                              prefixIcon: const Icon(Icons.shield_outlined, color: AppTheme.accentOrange),
+                              fillColor: const Color(0xFF141414),
+                              filled: true,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            validator: (val) {
+                              if (val?.isEmpty ?? true) return 'Please enter corporate admin email';
+                              if (val!.endsWith('@gmail.com')) return 'Gmail addresses not allowed for Admin Panel';
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Secure Password',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            decoration: InputDecoration(
+                              hintText: 'Enter BuildMaster password',
+                              hintStyle: TextStyle(color: AppTheme.mediumGray.withOpacity(0.6)),
+                              prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.accentOrange),
+                              suffixIcon: IconButton(
+                                icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: AppTheme.accentOrange),
+                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                              ),
+                              fillColor: const Color(0xFF141414),
+                              filled: true,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            validator: (val) {
+                              if (val?.isEmpty ?? true) return 'Please enter admin password';
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 24),
+                          GradientButton(
+                            text: _isLoading ? 'Authenticating Admin...' : 'Authenticate & Access Portal',
+                            onPressed: _isLoading ? null : _authenticateAdmin,
+                          ),
+                        ],
+                      ),
+                    ).animate().fadeIn(delay: const Duration(milliseconds: 400)),
+                  ],
+                ),
               ),
             ),
           ),

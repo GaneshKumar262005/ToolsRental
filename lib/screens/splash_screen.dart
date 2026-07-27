@@ -1,6 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../themes/app_theme.dart';
+import '../dummy_data/dummy_data.dart';
+import '../models/user_model.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,15 +17,59 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToOnboarding();
+    _checkLoginStatus();
   }
 
-  void _navigateToOnboarding() {
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/onboarding');
+  void _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final role = prefs.getString('role');
+
+    // Resolve profile image before the delay
+    String resolvedImageUrl = 'assets/images/avatar.jpg';
+    final savedBase64 = prefs.getString('profileImageBase64') ?? '';
+    if (savedBase64.isNotEmpty) {
+      resolvedImageUrl = 'data:image/jpeg;base64,$savedBase64';
+    } else {
+      final savedImagePath = prefs.getString('profileImagePath') ?? '';
+      if (savedImagePath.isNotEmpty) {
+        try {
+          final file = File(savedImagePath);
+          if (await file.exists()) {
+            resolvedImageUrl = savedImagePath;
+          }
+        } catch (_) {}
       }
-    });
+    }
+    
+    await Future.delayed(const Duration(seconds: 3));
+    if (!mounted) return;
+
+    if (token != null && token.isNotEmpty) {
+      // Restore basic user data for DummyData
+      final id = prefs.getString('userId') ?? '1';
+      final name = prefs.getString('userName') ?? 'User';
+      final email = prefs.getString('userEmail') ?? '';
+      
+      DummyData.currentUser = UserModel(
+        id: id,
+        name: name,
+        email: email,
+        phone: '+91 98765 43210',
+        imageUrl: resolvedImageUrl,
+        location: 'Chennai, Tamil Nadu',
+      );
+
+      if (role == 'admin') {
+        if (mounted) Navigator.pushReplacementNamed(context, '/admin-dashboard');
+      } else if (role == 'shopowner') {
+        if (mounted) Navigator.pushReplacementNamed(context, '/shop-owner-dashboard');
+      } else {
+        if (mounted) Navigator.pushReplacementNamed(context, '/home', arguments: {'userName': name});
+      }
+    } else {
+      if (mounted) Navigator.pushReplacementNamed(context, '/onboarding');
+    }
   }
 
   @override
@@ -35,10 +83,10 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo
+              // Logo Image
               Container(
-                width: 120,
-                height: 120,
+                width: 150,
+                height: 150,
                 decoration: BoxDecoration(
                   color: AppTheme.primaryWhite,
                   borderRadius: BorderRadius.circular(24),
@@ -50,10 +98,12 @@ class _SplashScreenState extends State<SplashScreen> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.construction,
-                  size: 60,
-                  color: AppTheme.primaryYellow,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Image.asset(
+                    'assets/images/drilling_machine.png',
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ).animate().scale(
                 duration: const Duration(milliseconds: 800),

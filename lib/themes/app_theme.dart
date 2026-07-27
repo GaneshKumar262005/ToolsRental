@@ -62,13 +62,18 @@ class AppTheme {
   static BoxDecoration cardDecoration({
     Color? color,
     double radius = 16,
+    BuildContext? context,
   }) {
+    final isDark = context != null && Theme.of(context).brightness == Brightness.dark;
     return BoxDecoration(
-      color: color ?? primaryWhite,
+      color: color ?? (isDark ? darkGray : primaryWhite),
       borderRadius: BorderRadius.circular(radius),
+      border: Border.all(
+        color: isDark ? primaryWhite.withOpacity(0.12) : mediumGray.withOpacity(0.25),
+      ),
       boxShadow: [
         BoxShadow(
-          color: primaryBlack.withOpacity(0.08),
+          color: primaryBlack.withOpacity(isDark ? 0.3 : 0.08),
           blurRadius: 20,
           offset: const Offset(0, 4),
         ),

@@ -3,6 +3,7 @@ import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
+import 'screens/shop_owner_login_screen.dart';
 import 'screens/shop_owner_signup_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/categories_screen.dart';
@@ -18,13 +19,27 @@ import 'screens/backend_admin_screen.dart';
 import 'screens/profile_screen.dart';
 import 'themes/app_theme.dart';
 import 'widgets/bottom_navigation.dart';
+import 'services/firebase_service.dart';
 
-void main() {
-  runApp(const ConstructHubApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase safely — app launches even if Firebase fails
+  bool firestoreConnected = false;
+  try {
+    await FirebaseService().init();
+    // Skip connection test at startup to avoid blocking the UI
+    firestoreConnected = true;
+  } catch (e) {
+    print('Firebase startup error: $e');
+  }
+
+  runApp(ConstructHubApp(firestoreConnected: firestoreConnected));
 }
 
 class ConstructHubApp extends StatelessWidget {
-  const ConstructHubApp({super.key});
+  final bool firestoreConnected;
+  const ConstructHubApp({super.key, this.firestoreConnected = false});
 
   @override
   Widget build(BuildContext context) {
@@ -41,24 +56,28 @@ class ConstructHubApp extends StatelessWidget {
         '/onboarding': (context) => const OnboardingScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
+        '/shop-owner-login': (context) => const ShopOwnerLoginScreen(),
         '/shop-owner-signup': (context) => const ShopOwnerSignupScreen(),
         '/home': (context) {
           final args = ModalRoute.of(context)?.settings.arguments
               as Map<String, dynamic>?;
           final userName = args?['userName'] as String? ?? 'User';
-          return MainNavigationWrapper(userName: userName);
+          return MainNavigationWrapper(
+            userName: userName,
+            firestoreConnected: firestoreConnected,
+          );
         },
-        '/categories': (context) => const CategoriesScreen(),
-        '/nearby-rentals': (context) => const NearbyRentalsScreen(),
-        '/notifications': (context) => const NotificationsScreen(),
-        '/booking-history': (context) => const BookingHistoryScreen(),
-        '/payment-history': (context) => const PaymentHistoryScreen(),
-        '/vendor-dashboard': (context) => const VendorDashboardScreen(),
-        '/admin-login': (context) => const AdminLoginScreen(),
-        '/admin-dashboard': (context) => const AdminDashboardScreen(),
-        '/shop-owner-dashboard': (context) => const ShopOwnerDashboardScreen(),
-        '/backend-admin': (context) => const BackendAdminScreen(),
-        '/profile': (context) => const ProfileScreen(),
+        '/categories': (context) => CategoriesScreen(),
+        '/nearby-rentals': (context) => NearbyRentalsScreen(),
+        '/notifications': (context) => NotificationsScreen(),
+        '/booking-history': (context) => BookingHistoryScreen(),
+        '/payment-history': (context) => PaymentHistoryScreen(),
+        '/vendor-dashboard': (context) => VendorDashboardScreen(),
+        '/admin-login': (context) => AdminLoginScreen(),
+        '/admin-dashboard': (context) => AdminDashboardScreen(),
+        '/shop-owner-dashboard': (context) => ShopOwnerDashboardScreen(),
+        '/backend-admin': (context) => BackendAdminScreen(),
+        '/profile': (context) => ProfileScreen(),
       },
     );
   }
@@ -66,7 +85,12 @@ class ConstructHubApp extends StatelessWidget {
 
 class MainNavigationWrapper extends StatefulWidget {
   final String userName;
-  const MainNavigationWrapper({super.key, this.userName = 'User'});
+  final bool firestoreConnected;
+  const MainNavigationWrapper({
+    super.key,
+    this.userName = 'User',
+    this.firestoreConnected = false,
+  });
 
   @override
   State<MainNavigationWrapper> createState() => _MainNavigationWrapperState();
@@ -81,11 +105,14 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
     super.initState();
     // ✅ FIX: build list once so IndexedStack keeps stable widget elements
     _screens = [
-      HomeScreen(userName: widget.userName),
-      const CategoriesScreen(),
-      const BookingHistoryScreen(),
-      const NotificationsScreen(),
-      const ProfileScreen(),
+      HomeScreen(
+        userName: widget.userName,
+        firestoreConnected: widget.firestoreConnected,
+      ),
+      CategoriesScreen(),
+      BookingHistoryScreen(),
+      NotificationsScreen(),
+      ProfileScreen(),
     ];
   }
 

@@ -38,7 +38,7 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
                   child: StatsCard(
                     title: 'Total Earnings',
                     value: '₹1,033,350',
-                    icon: Icons.attach_money,
+                    icon: Icons.currency_rupee,
                     iconColor: AppTheme.accentGreen,
                   ),
                 ),

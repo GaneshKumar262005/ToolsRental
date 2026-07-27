@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../dummy_data/dummy_data.dart';
 import '../themes/app_theme.dart';
 import '../config/api_config.dart';
+
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -24,56 +26,38 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _fetchNotifications() async {
+    List<dynamic> combinedNotifs = [];
+
+    // 1. Load customer notifications saved in SharedPreferences
     try {
-      final userId = int.tryParse(DummyData.currentUser.id) ?? 1;
-      print('Fetching notifications for userId: $userId');
-      print('URL: ${ApiConfig.notificationsUrl(userId)}');
-      
-      final response = await http.get(
-        Uri.parse(ApiConfig.notificationsUrl(userId)),
-      ).timeout(
-        const Duration(seconds: 10),
-      );
+      final prefs = await SharedPreferences.getInstance();
+      final String notifsJson = prefs.getString('customer_notifications') ?? '[]';
+      final List<dynamic> localNotifs = jsonDecode(notifsJson);
+      combinedNotifs.addAll(localNotifs);
+    } catch (_) {}
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success']) {
-          setState(() {
-            _notifications = data['notifications'];
-            _isLoading = false;
-          });
-          print('Notifications fetched: ${_notifications.length}');
-        } else {
-          setState(() {
-            _isLoading = false;
-          });
-          print('API returned success=false');
-        }
-      } else {
-        setState(() {
-          _isLoading = false;
+    // 2. Load DummyData notifications targeted at customer
+    for (var n in DummyData.notifications.where((n) => n.targetRole == 'customer')) {
+      if (!combinedNotifs.any((cn) => cn['id'] == n.id || cn['title'] == n.title)) {
+        combinedNotifs.add({
+          'id': n.id,
+          'title': n.title,
+          'message': n.message,
+          'type': n.type == 'booking' ? 'booking_accepted' : (n.type == 'warning' ? 'booking_rejected' : n.type),
+          'read': n.isRead,
+          'createdAt': n.dateTime.toIso8601String(),
         });
-        print('HTTP error: ${response.statusCode}');
-      }
-    } catch (error) {
-      print('Error fetching notifications: $error');
-      setState(() {
-        _isLoading = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load notifications: ${error.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
       }
     }
+
+    if (mounted) {
+      setState(() {
+        _notifications = combinedNotifs;
+        _isLoading = false;
+      });
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {

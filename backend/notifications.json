@@ -5,7 +5,7 @@
     "type": "booking_accepted",
     "message": "Your booking #5 has been accepted!",
     "bookingId": 5,
-    "read": false,
+    "read": true,
     "createdAt": "2026-06-02T20:36:11.945Z"
   },
   {
@@ -79,5 +79,50 @@
     "bookingId": 15,
     "read": false,
     "createdAt": "2026-06-11T05:08:00.879Z"
+  },
+  {
+    "id": 10,
+    "userId": 1,
+    "type": "booking_accepted",
+    "message": "Your booking #1 has been accepted!",
+    "bookingId": 1,
+    "read": false,
+    "createdAt": "2026-06-11T08:59:55.113Z"
+  },
+  {
+    "id": 11,
+    "userId": 1,
+    "type": "booking_rejected",
+    "message": "Your booking #1 has been rejected.",
+    "bookingId": 1,
+    "read": false,
+    "createdAt": "2026-06-11T09:00:21.844Z"
+  },
+  {
+    "id": 12,
+    "userId": 1,
+    "type": "booking_rejected",
+    "message": "Your booking #1 has been rejected.",
+    "bookingId": 1,
+    "read": false,
+    "createdAt": "2026-06-11T09:00:21.849Z"
+  },
+  {
+    "id": 13,
+    "userId": 2,
+    "type": "booking_accepted",
+    "message": "Your booking #17 has been accepted!",
+    "bookingId": 17,
+    "read": false,
+    "createdAt": "2026-06-12T04:06:31.746Z"
+  },
+  {
+    "id": 14,
+    "userId": 1,
+    "type": "booking_accepted",
+    "message": "Your booking #1 has been accepted!",
+    "bookingId": 1,
+    "read": false,
+    "createdAt": "2026-06-12T04:20:45.819Z"
   }
 ]

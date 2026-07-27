@@ -1,8 +1,13 @@
 import 'dart:convert';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../dummy_data/dummy_data.dart';
 import '../themes/app_theme.dart';
 import '../models/user_model.dart';
@@ -21,12 +26,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _phoneController = TextEditingController();
   final _locationController = TextEditingController();
   File? _pickedImage;
+  Uint8List? _pickedBytes;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadSavedProfileImage();
   }
 
   void _loadUserData() {
@@ -35,6 +42,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _emailController.text = user.email;
     _phoneController.text = user.phone;
     _locationController.text = user.location;
+  }
+
+  Future<void> _loadSavedProfileImage() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // 1. Try loading base64 image (universal cross-platform support)
+    final base64Str = prefs.getString('profileImageBase64');
+    if (base64Str != null && base64Str.isNotEmpty) {
+      try {
+        final bytes = base64Decode(base64Str);
+        if (mounted) {
+          setState(() {
+            _pickedBytes = bytes;
+            DummyData.currentUser = UserModel(
+              id: DummyData.currentUser.id,
+              name: DummyData.currentUser.name,
+              email: DummyData.currentUser.email,
+              phone: DummyData.currentUser.phone,
+              location: DummyData.currentUser.location,
+              imageUrl: 'data:image/jpeg;base64,$base64Str',
+            );
+          });
+        }
+        return;
+      } catch (_) {}
+    }
+
+    // 2. Try loading local file path (Desktop / Mobile)
+    final savedPath = prefs.getString('profileImagePath');
+    if (savedPath != null && savedPath.isNotEmpty) {
+      if (!kIsWeb) {
+        final file = File(savedPath);
+        if (await file.exists()) {
+          if (mounted) {
+            setState(() {
+              _pickedImage = file;
+              DummyData.currentUser = UserModel(
+                id: DummyData.currentUser.id,
+                name: DummyData.currentUser.name,
+                email: DummyData.currentUser.email,
+                phone: DummyData.currentUser.phone,
+                location: DummyData.currentUser.location,
+                imageUrl: savedPath,
+              );
+            });
+          }
+        }
+      }
+    }
   }
 
   @override
@@ -72,17 +128,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   // Avatar with change option
                   GestureDetector(
-                    onTap: _pickImageFromGallery,
+                    onTap: _showImagePickerOptions,
                     child: Stack(
                       children: [
                         CircleAvatar(
+                          key: ValueKey(_pickedImage?.path ?? user.imageUrl),
                           radius: 50,
-                          backgroundImage: _pickedImage != null
-                              ? FileImage(_pickedImage!) as ImageProvider
-                              : (user.imageUrl.startsWith('assets/')
-                                      ? AssetImage(user.imageUrl)
-                                      : NetworkImage(user.imageUrl))
-                                  as ImageProvider,
+                          backgroundColor: AppTheme.lightGray,
+                          backgroundImage: _getProfileImageProvider(user.imageUrl),
                         ),
                         Positioned(
                           bottom: 0,
@@ -313,15 +366,185 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ─────────────────────────── Dialogs ───────────────────────────
 
-  Future<void> _pickImageFromGallery() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    if (picked != null) {
+  ImageProvider _getProfileImageProvider(String userImageUrl) {
+    if (_pickedBytes != null) {
+      return MemoryImage(_pickedBytes!);
+    }
+    if (_pickedImage != null && !kIsWeb && _pickedImage!.existsSync()) {
+      return FileImage(_pickedImage!);
+    }
+    if (userImageUrl.isNotEmpty) {
+      if (userImageUrl.startsWith('data:image')) {
+        try {
+          final base64Data = userImageUrl.split(',').last;
+          return MemoryImage(base64Decode(base64Data));
+        } catch (_) {}
+      }
+      if (userImageUrl.startsWith('assets/')) {
+        return AssetImage(userImageUrl);
+      } else if (userImageUrl.startsWith('http://') || userImageUrl.startsWith('https://')) {
+        return NetworkImage(userImageUrl);
+      } else if (!kIsWeb) {
+        final file = File(userImageUrl);
+        if (file.existsSync()) {
+          return FileImage(file);
+        }
+      }
+    }
+    return const AssetImage('assets/images/avatar.jpg');
+  }
+
+  void _showImagePickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Text(
+                'Profile Photo',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined, color: AppTheme.primaryYellow),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined, color: AppTheme.primaryYellow),
+                title: const Text('Take a Photo'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              if (_pickedBytes != null || _pickedImage != null || !DummyData.currentUser.imageUrl.startsWith('assets/'))
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: AppTheme.accentRed),
+                  title: const Text('Remove Photo', style: TextStyle(color: AppTheme.accentRed)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _removeProfileImage();
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: source, imageQuality: 85);
+      if (picked != null) {
+        // Read raw image bytes for universal cross-platform support (Web, Windows Desktop, Mobile)
+        final bytes = await picked.readAsBytes();
+        final base64Str = base64Encode(bytes);
+
+        // Invalidate Flutter image cache so new image renders instantly
+        PaintingBinding.instance.imageCache.clear();
+        PaintingBinding.instance.imageCache.clearLiveImages();
+
+        // Save base64 string in SharedPreferences for instant persistence without plugin errors
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('profileImageBase64', base64Str);
+
+        // Safely try saving file path if path_provider is available (non-web)
+        String savedPath = picked.path;
+        if (!kIsWeb) {
+          try {
+            final appDir = await getApplicationDocumentsDirectory();
+            final ext = p.extension(picked.path).isNotEmpty ? p.extension(picked.path) : '.jpg';
+            final fileName = 'profile_dp_${DateTime.now().millisecondsSinceEpoch}$ext';
+            final targetPath = '${appDir.path}/$fileName';
+            final savedFile = await File(picked.path).copy(targetPath);
+            savedPath = savedFile.path;
+            await prefs.setString('profileImagePath', savedPath);
+          } catch (_) {
+            // Path provider fallback ignored gracefully
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            _pickedBytes = bytes;
+            if (!kIsWeb && savedPath.isNotEmpty) {
+              _pickedImage = File(savedPath);
+            }
+            DummyData.currentUser = UserModel(
+              id: DummyData.currentUser.id,
+              name: DummyData.currentUser.name,
+              email: DummyData.currentUser.email,
+              phone: DummyData.currentUser.phone,
+              location: DummyData.currentUser.location,
+              imageUrl: savedPath.isNotEmpty ? savedPath : 'data:image/jpeg;base64,$base64Str',
+            );
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile picture updated successfully ✓'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not pick image: ${e.toString()}'),
+            backgroundColor: AppTheme.accentRed,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _removeProfileImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('profileImageBase64');
+    await prefs.remove('profileImagePath');
+
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
+
+    if (mounted) {
       setState(() {
-        _pickedImage = File(picked.path);
+        _pickedBytes = null;
+        _pickedImage = null;
+        DummyData.currentUser = UserModel(
+          id: DummyData.currentUser.id,
+          name: DummyData.currentUser.name,
+          email: DummyData.currentUser.email,
+          phone: DummyData.currentUser.phone,
+          location: DummyData.currentUser.location,
+          imageUrl: 'assets/images/avatar.jpg',
+        );
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile picture updated')),
+        const SnackBar(content: Text('Profile picture removed')),
       );
     }
   }
@@ -359,9 +582,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, '/login');
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear();
+              if (mounted) {
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, '/login');
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.accentRed,

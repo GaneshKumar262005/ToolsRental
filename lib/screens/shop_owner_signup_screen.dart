@@ -2,11 +2,15 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../themes/app_theme.dart';
 import '../widgets/gradient_button.dart';
 import '../config/api_config.dart';
 import '../dummy_data/dummy_data.dart';
 import '../models/user_model.dart';
+import '../services/email_service.dart';
+import '../services/firebase_service.dart';
+
 
 class ShopOwnerSignupScreen extends StatefulWidget {
   const ShopOwnerSignupScreen({super.key});
@@ -59,8 +63,135 @@ class _ShopOwnerSignupScreenState extends State<ShopOwnerSignupScreen> {
         final String location = _locationController.text.trim();
         final String password = _passwordController.text.trim();
 
+        // 1. Send OTP via EmailService (Tries backend first, falls back to direct EmailJS/local OTP)
+        final otpResponse = await EmailService.sendOtp(email: email, name: name);
+
+        if (otpResponse['success'] == true) {
+          if (mounted) {
+            _showOtpDialog(name, email, phone, location, password);
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(otpResponse['message'] ?? 'Failed to send verification code'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (error) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${error.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }
+  }
+
+  void _showOtpDialog(String name, String email, String phone, String location, String password) {
+    final otpController = TextEditingController();
+    bool verifying = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppTheme.primaryBlack,
+              title: const Text('Verify Shop Owner Email', style: TextStyle(color: AppTheme.primaryWhite)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('We sent a 6-digit verification code to $email', style: const TextStyle(color: AppTheme.mediumGray)),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: otpController,
+                    style: const TextStyle(color: AppTheme.primaryWhite, letterSpacing: 8, fontSize: 24, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: AppTheme.darkGray,
+                      counterText: '',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: AppTheme.primaryYellow, width: 2),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: verifying ? null : () => Navigator.pop(ctx),
+                  child: const Text('Cancel', style: TextStyle(color: AppTheme.mediumGray)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryYellow,
+                    foregroundColor: Colors.black,
+                  ),
+                  onPressed: verifying ? null : () async {
+                    if (otpController.text.length != 6) return;
+                    setDialogState(() => verifying = true);
+
+                    // Verify OTP via EmailService
+                    final res = await EmailService.verifyOtp(email: email, otp: otpController.text);
+
+                    if (res['success'] == true) {
+                      Navigator.pop(ctx);
+                      _registerAfterOtp(name, email, phone, location, password);
+                    } else {
+                      setDialogState(() => verifying = false);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(res['message'] ?? 'Incorrect verification code'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: verifying
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                      : const Text('Verify & Create Account', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _registerAfterOtp(String name, String email, String phone, String location, String password) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      String userId = DateTime.now().millisecondsSinceEpoch.toString();
+      String token = 'shopowner-token-${DateTime.now().millisecondsSinceEpoch}';
+
+      try {
         final response = await http.post(
-          Uri.parse(ApiConfig.loginUrl),
+          Uri.parse(ApiConfig.signupUrl),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'name': name,
@@ -68,53 +199,87 @@ class _ShopOwnerSignupScreenState extends State<ShopOwnerSignupScreen> {
             'phone': phone,
             'location': location,
             'password': password,
+            'role': 'shopowner',
           }),
-        );
+        ).timeout(const Duration(seconds: 4));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
-          if (data['success']) {
-            // Update DummyData.currentUser with backend response
-            final userData = data['user'];
-            DummyData.currentUser = UserModel(
-              id: userData['id'].toString(),
-              name: userData['name'],
-              email: userData['email'],
-              phone: userData['phone'] ?? phone,
-              imageUrl: 'assets/images/download.jpg',
-              location: userData['location'] ?? location,
-            );
-
-            // Sign up successful - route to shop owner dashboard
-            Navigator.pushReplacementNamed(
-              context,
-              '/shop-owner-dashboard',
-            );
-          } else {
-            // Sign up failed
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(data['message'] ?? 'Sign up failed'),
-                backgroundColor: Colors.red,
-              ),
-            );
+          if (data['success'] == true && data['user'] != null) {
+            userId = data['user']['id'].toString();
+            if (data['token'] != null) token = data['token'];
           }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Server error. Please try again.'),
-              backgroundColor: Colors.red,
-            ),
-          );
         }
-      } catch (error) {
+      } catch (_) {
+        // Backend optional fallback
+      }
+
+      // Update DummyData.currentUser for active session
+      DummyData.currentUser = UserModel(
+        id: userId,
+        name: name,
+        email: email,
+        phone: phone,
+        imageUrl: 'assets/images/avatar.jpg',
+        location: location,
+      );
+
+      // Save session to SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', token);
+      await prefs.setString('role', 'shopowner');
+      await prefs.setString('userId', userId);
+      await prefs.setString('userName', name);
+      await prefs.setString('userEmail', email);
+
+      // Save User Account to Firebase Firestore
+      final shopOwnerData = {
+        'id': userId,
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'location': location,
+        'password': password,
+        'role': 'shopowner',
+        'registeredAt': DateTime.now().toIso8601String(),
+      };
+      await FirebaseService().saveUserToFirestore(shopOwnerData);
+
+      // Permanently store in registered_users persistent list
+      final String registeredUsersJson = prefs.getString('registered_users') ?? '[]';
+      List<dynamic> usersList = jsonDecode(registeredUsersJson);
+      usersList.removeWhere((u) => u['email'] == email);
+      usersList.add(shopOwnerData);
+
+      await prefs.setString('registered_users', jsonEncode(usersList));
+
+      // Send welcome email
+      EmailService.sendWelcomeEmail(name: name, email: email);
+
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Shop Owner account registered successfully! 🎉'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pushReplacementNamed(
+          context,
+          '/shop-owner-dashboard',
+        );
+      }
+    } catch (error) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${error.toString()}'),
+            content: Text('Error creating account: ${error.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
-      } finally {
+      }
+    } finally {
+      if (mounted) {
         setState(() {
           _isLoading = false;
         });

@@ -109,6 +109,7 @@ class NotificationModel {
   final String title;
   final String message;
   final String type;
+  final String targetRole; // 'customer' or 'shopowner'
   final DateTime dateTime;
   bool isRead;
 
@@ -117,6 +118,7 @@ class NotificationModel {
     required this.title,
     required this.message,
     required this.type,
+    this.targetRole = 'customer',
     required this.dateTime,
     required this.isRead,
   });

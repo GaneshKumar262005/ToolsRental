@@ -11,7 +11,13 @@ import 'booking_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userName;
-  const HomeScreen({super.key, required this.userName});
+  final bool firestoreConnected;
+
+  const HomeScreen({
+    super.key,
+    required this.userName,
+    this.firestoreConnected = false,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -382,7 +388,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     color: Colors.white.withOpacity(0.25),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
-                                  child: const Icon(Icons.attach_money,
+                                  child: const Icon(Icons.currency_rupee,
                                       color: Colors.white, size: 22),
                                 ),
                                 const SizedBox(height: 12),
@@ -428,19 +434,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         _buildBanner(
                           'Get 20% Off',
                           'On all concrete mixers this weekend',
-                          'assets/images/download (1).jpg',
+                          'assets/images/banner1.jpg',
                           AppTheme.primaryYellow,
                         ),
                         _buildBanner(
                           'New Tools Added',
                           'Check out our latest equipment',
-                          'assets/images/download.jpg',
+                          'assets/images/banner2.jpg',
                           AppTheme.accentBlue,
                         ),
                         _buildBanner(
                           'Free Delivery',
                           'On orders above ₹8,300',
-                          'assets/images/download (5).jpg',
+                          'assets/images/banner3.jpg',
                           AppTheme.accentGreen,
                         ),
                       ],
