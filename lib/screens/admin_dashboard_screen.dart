@@ -4,7 +4,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../dummy_data/dummy_data.dart';
 
 import '../themes/app_theme.dart';
@@ -25,6 +24,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   List<Map<String, dynamic>> _backendUsers = [];
   List<Map<String, dynamic>> _backendBookings = [];
   bool _isLoadingUsers = false;
+  // ignore: unused_field
   bool _isLoadingBookings = false;
   String _revenueTimeframe = 'Months'; // 'Weeks', 'Months', 'Years'
 
@@ -380,11 +380,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             // Stats cards
             Row(
               children: [
@@ -437,23 +440,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Pending Vendor Approvals',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                Expanded(
+                  child: Text(
+                    'Pending Vendor Approvals',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppTheme.accentOrange.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: AppTheme.accentOrange),
                   ),
                   child: Text(
-                    '${_pendingVendorsList.length} Pending Approval',
+                    '${_pendingVendorsList.length} Pending',
                     style: const TextStyle(
                       color: AppTheme.accentOrange,
                       fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                      fontSize: 11,
                     ),
                   ),
                 ),
@@ -669,11 +675,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Verified Shops & Official Partners',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold) ?? const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                Expanded(
+                  child: Text(
+                    'Verified Shops & Official Partners',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold) ?? const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
                 ),
-
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
@@ -682,7 +690,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     border: Border.all(color: Colors.green),
                   ),
                   child: Text(
-                    '${_verifiedShopsList.length} Verified Partners',
+                    '${_verifiedShopsList.length} Verified',
                     style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 11),
                   ),
                 ),
@@ -822,10 +830,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                   ),
                                 ),
                                 subtitle: Text(
-                                  '${user['email']} • ${user['phone'] ?? '+91 98765 43210'}',
+                                  '${user['email']}\n${user['phone'] ?? '+91 98765 43210'}',
                                   style: TextStyle(
                                     color: AppTheme.mediumGray,
-                                    fontSize: 12,
+                                    fontSize: 11,
+                                    height: 1.3,
                                   ),
                                 ),
                                 trailing: Container(
@@ -851,58 +860,58 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(height: 28),
 
             // Revenue Analytics Section Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'Revenue Analytics',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Revenue breakdown in Indian Rupees (₹) by $_revenueTimeframe',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppTheme.mediumGray,
-                          ),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.mediumGray.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: ['Weeks', 'Months', 'Years'].map((tf) {
+                          final isSelected = _revenueTimeframe == tf;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _revenueTimeframe = tf;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isSelected ? AppTheme.primaryYellow : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                tf,
+                                style: TextStyle(
+                                  color: isSelected ? AppTheme.primaryBlack : AppTheme.mediumGray,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     ),
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.mediumGray.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: ['Weeks', 'Months', 'Years'].map((tf) {
-                      final isSelected = _revenueTimeframe == tf;
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _revenueTimeframe = tf;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: isSelected ? AppTheme.primaryYellow : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            tf,
-                            style: TextStyle(
-                              color: isSelected ? AppTheme.primaryBlack : AppTheme.mediumGray,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                const SizedBox(height: 4),
+                Text(
+                  'Revenue breakdown in Indian Rupees (₹) by $_revenueTimeframe',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppTheme.mediumGray,
+                      ),
                 ),
               ],
             ),
@@ -1027,7 +1036,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             // Usage & Revenue Table
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: AppTheme.cardDecoration(),
+              decoration: AppTheme.cardDecoration(context: context),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1046,32 +1055,39 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(height: 12),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      headingRowColor: WidgetStateProperty.all(AppTheme.primaryYellow.withOpacity(0.15)),
-                      columns: const [
-                        DataColumn(label: Text('Period', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(label: Text('Rentals Count', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(label: Text('App Usage Revenue (₹)', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
-                      ],
-                      rows: _getRevenueTableData().map((row) {
-                        return DataRow(cells: [
-                          DataCell(Text(row['period'].toString(), style: const TextStyle(fontWeight: FontWeight.w600))),
-                          DataCell(Text('${row['rentals']} rentals')),
-                          DataCell(Text(
-                            row['revenue'].toString(),
-                            style: const TextStyle(color: AppTheme.accentGreen, fontWeight: FontWeight.bold),
-                          )),
-                          DataCell(Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppTheme.accentGreen.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Text('Active', style: TextStyle(color: AppTheme.accentGreen, fontSize: 11)),
-                          )),
-                        ]);
-                      }).toList(),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: DataTable(
+                        headingRowColor: WidgetStateProperty.all(AppTheme.primaryYellow),
+                        dataRowColor: WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
+                          return const Color(0xFF1E1E1E);
+                        }),
+                        columns: const [
+                          DataColumn(label: Text('Period', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13))),
+                          DataColumn(label: Text('Rentals', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13))),
+                          DataColumn(label: Text('Revenue (₹)', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13))),
+                          DataColumn(label: Text('Status', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13))),
+                        ],
+                        rows: _getRevenueTableData().map((row) {
+                          return DataRow(cells: [
+                            DataCell(Text(row['period'].toString(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13))),
+                            DataCell(Text('${row['rentals']} rentals', style: const TextStyle(color: Colors.white70, fontSize: 13))),
+                            DataCell(Text(
+                              row['revenue'].toString(),
+                              style: const TextStyle(color: Color(0xFF00E676), fontWeight: FontWeight.bold, fontSize: 13),
+                            )),
+                            DataCell(Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF00E676).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.3)),
+                              ),
+                              child: const Text('Active', style: TextStyle(color: Color(0xFF00E676), fontWeight: FontWeight.bold, fontSize: 11)),
+                            )),
+                          ]);
+                        }).toList(),
+                      ),
                     ),
                   ),
                 ],
@@ -1110,10 +1126,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
+
 
   Widget _buildActivityItem(String title, String subtitle, IconData icon, Color color, String time) {
+
     return Row(
       children: [
         Container(

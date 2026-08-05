@@ -8,6 +8,7 @@ import '../widgets/vendor_card.dart';
 import '../widgets/review_card.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/tool_card.dart';
+import 'vendor_detail_screen.dart';
 
 class ToolDetailsScreen extends StatefulWidget {
   final ToolModel tool;
@@ -288,7 +289,14 @@ class _ToolDetailsScreenState extends State<ToolDetailsScreen> {
                   const SizedBox(height: 12),
                   VendorCard(
                     vendor: widget.tool.vendor,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => VendorDetailScreen(vendor: widget.tool.vendor),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
                   // Reviews

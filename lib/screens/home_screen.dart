@@ -8,6 +8,7 @@ import '../widgets/vendor_card.dart';
 import '../widgets/search_bar_widget.dart';
 import '../widgets/app_image.dart';
 import 'booking_screen.dart';
+import 'vendor_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userName;
@@ -119,176 +120,76 @@ class _HomeScreenState extends State<HomeScreen> {
               actions: [
                 IconButton(
                   icon: const Icon(Icons.notifications_outlined),
-                  onPressed: () =>
-                      Navigator.pushNamed(context, '/notifications'),
+                  onPressed: () => Navigator.pushNamed(context, '/notifications'),
                 ),
               ],
             ),
-
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ✅ Search bar with live results below
-                    SearchBarWidget(
-                      hintText: 'Search tools, categories...',
-                      controller: _searchController,
-                      readOnly: false,
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value;
-                          _showSearchResults = value.isNotEmpty;
-                        });
-                      },
-                    ),
-
-                    // ✅ Inline search results dropdown
-                    if (_showSearchResults) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.12),
-                              blurRadius: 20,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1200),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SearchBarWidget(
+                          hintText: 'Search tools, categories...',
+                          controller: _searchController,
+                          readOnly: false,
+                          onChanged: (value) {
+                            setState(() {
+                              _searchQuery = value;
+                              _showSearchResults = value.isNotEmpty;
+                            });
+                          },
                         ),
-                        child: _filteredTools.isEmpty
-                            ? Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.search_off,
-                                        color: AppTheme.mediumGray
-                                            .withOpacity(0.5),
-                                        size: 28),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      'No results for "$_searchQuery"',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(
-                                              color: AppTheme.mediumGray),
+                        if (_showSearchResults) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 20, offset: const Offset(0, 6))],
+                            ),
+                            child: _filteredTools.isEmpty
+                                ? Padding(
+                                    padding: const EdgeInsets.all(24),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.search_off, color: AppTheme.mediumGray.withOpacity(0.5), size: 28),
+                                        const SizedBox(width: 12),
+                                        Text('No results for "$_searchQuery"', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.mediumGray)),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              )
-                            : ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: _filteredTools.length > 5
-                                    ? 5
-                                    : _filteredTools.length,
-                                separatorBuilder: (_, __) => Divider(
-                                  height: 1,
-                                  color:
-                                      AppTheme.mediumGray.withOpacity(0.15),
-                                ),
-                                itemBuilder: (context, index) {
-                                  final tool = _filteredTools[index];
-                                  return ListTile(
-                                    contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 6),
-                                    leading: ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: AppImage(
-                                        imageUrl: tool.imageUrl,
-                                        width: 52,
-                                        height: 52,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                    title: Text(
-                                      tool.name,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleSmall
-                                          ?.copyWith(
-                                              fontWeight: FontWeight.bold),
-                                    ),
-                                    subtitle: Text(
-                                      tool.category,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                              color: AppTheme.mediumGray),
-                                    ),
-                                    trailing: ShaderMask(
-                                      shaderCallback: (bounds) =>
-                                          const LinearGradient(
-                                        colors: [
-                                          Color(0xFFFFD700),
-                                          Color(0xFFFF8C00)
-                                        ],
-                                      ).createShader(bounds),
-                                      child: Text(
-                                        '₹${tool.pricePerDay}/day',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleSmall
-                                            ?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
+                                  )
+                                : ListView.separated(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    itemCount: _filteredTools.length > 5 ? 5 : _filteredTools.length,
+                                    separatorBuilder: (_, __) => Divider(height: 1, color: AppTheme.mediumGray.withOpacity(0.15)),
+                                    itemBuilder: (context, index) {
+                                      final tool = _filteredTools[index];
+                                      return ListTile(
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                        leading: ClipRRect(borderRadius: BorderRadius.circular(10), child: AppImage(imageUrl: tool.imageUrl, width: 52, height: 52, fit: BoxFit.cover)),
+                                        title: Text(tool.name, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                                        subtitle: Text(tool.category, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.mediumGray)),
+                                        trailing: ShaderMask(
+                                          shaderCallback: (bounds) => const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFF8C00)]).createShader(bounds),
+                                          child: Text('₹${tool.pricePerDay}/day', style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
                                         ),
-                                      ),
-                                    ),
-                                    onTap: () {
-                                      // ✅ Navigate to booking screen
-                                      _searchController.clear();
-                                      setState(() {
-                                        _searchQuery = '';
-                                        _showSearchResults = false;
-                                      });
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => BookingScreen(tool: tool),
-                                        ),
+                                        onTap: () {
+                                          _searchController.clear();
+                                          setState(() {
+                                            _searchQuery = '';
+                                            _showSearchResults = false;
+                                          });
+                                          Navigator.push(context, MaterialPageRoute(builder: (_) => BookingScreen(tool: tool)));
+                                        },
                                       );
                                     },
-                                  );
-                                },
-                              ),
-                      ),
-                      // ✅ Show all results button
-                      if (_filteredTools.length > 5)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.pushNamed(context, '/categories');
-                            },
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFFFFD700),
-                                    Color(0xFFFF8C00)
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'See all ${_filteredTools.length} results',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
                           ),
                         ),
                       const SizedBox(height: 16),
@@ -536,20 +437,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.68,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
-                      itemCount: DummyData.tools.length,
-                      itemBuilder: (context, index) {
-                        final tool = DummyData.tools[index];
-                        return _buildToolCard(tool);
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final width = constraints.maxWidth;
+                        final crossAxisCount = width >= 1200 ? 4 : (width >= 750 ? 3 : 2);
+                        final childAspectRatio = width >= 1200 ? 0.90 : (width >= 750 ? 0.85 : 0.58);
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            childAspectRatio: childAspectRatio,
+                            crossAxisSpacing: 14,
+                            mainAxisSpacing: 14,
+                          ),
+                          itemCount: DummyData.tools.length,
+                          itemBuilder: (context, index) {
+                            final tool = DummyData.tools[index];
+                            return _buildToolCard(tool);
+                          },
+                        );
                       },
                     ),
                     const SizedBox(height: 24),
@@ -561,7 +468,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ...DummyData.vendors.map((vendor) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: VendorCard(vendor: vendor, onTap: () {}),
+                        child: VendorCard(
+                          vendor: vendor,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => VendorDetailScreen(vendor: vendor),
+                              ),
+                            );
+                          },
+                        ),
                       );
                     }).toList(),
                     const SizedBox(height: 24),
@@ -572,7 +489,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         _gradientText('Recent Reviews',
                             Theme.of(context).textTheme.headlineSmall),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => VendorDetailScreen(vendor: DummyData.vendors.first),
+                              ),
+                            );
+                          },
                           child: Text('See All',
                               style: Theme.of(context)
                                   .textTheme
@@ -586,53 +510,61 @@ class _HomeScreenState extends State<HomeScreen> {
                     ...DummyData.reviews.take(2).map((review) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: AppTheme.cardDecoration(),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    backgroundImage:
-                                        NetworkImage(review.userImageUrl),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(review.userName,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleSmall),
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.star,
-                                                color: AppTheme.primaryYellow,
-                                                size: 16),
-                                            const SizedBox(width: 4),
-                                            Text(review.rating.toString(),
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodySmall),
-                                          ],
-                                        ),
-                                      ],
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => VendorDetailScreen(vendor: DummyData.vendors.first),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: AppTheme.cardDecoration(),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundImage:
+                                          NetworkImage(review.userImageUrl),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                review.comment,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(review.userName,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleSmall),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.star,
+                                                  color: AppTheme.primaryYellow,
+                                                  size: 16),
+                                              const SizedBox(width: 4),
+                                              Text(review.rating.toString(),
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodySmall),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  review.comment,
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );
@@ -642,10 +574,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-          ],
+          ),
         ),
-      ),
-      floatingActionButton: Container(
+      ],
+    ),
+  ),
+  floatingActionButton: Container(
         decoration: BoxDecoration(
           gradient: AppTheme.yellowBlackGradient,
           borderRadius: BorderRadius.circular(16),
@@ -668,21 +602,32 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildToolCard(ToolModel tool) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    final imageHeight = isMobile ? 102.0 : 135.0;
+
     return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => BookingScreen(tool: tool),
-        ),
-      ),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BookingScreen(tool: tool),
+          ),
+        );
+      },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E1E1E) : AppTheme.primaryWhite,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark
+                ? AppTheme.primaryYellow.withOpacity(0.2)
+                : AppTheme.mediumGray.withOpacity(0.3),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 12,
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+              blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
@@ -690,72 +635,142 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              flex: 3,
+            // Medium Image Container (Splash/Product style)
+            Container(
+              height: imageHeight,
+              width: double.infinity,
+              margin: EdgeInsets.all(isMobile ? 5 : 8),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F7),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.05)),
+              ),
               child: ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(16)),
-                child: AppImage(
-                  imageUrl: tool.imageUrl,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: AppImage(
+                    imageUrl: tool.imageUrl,
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ),
+            // Text Details & Website-style Layout
             Expanded(
-              flex: 2,
               child: Padding(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Category Badge Tag
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryYellow.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        tool.category.toUpperCase(),
+                        style: const TextStyle(
+                          color: AppTheme.primaryYellow,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    // Tool Name
                     Text(
                       tool.name,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: isDark ? Colors.white : AppTheme.primaryBlack,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    Text(
-                      tool.category,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: AppTheme.mediumGray),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    // Rating & Location Row
+                    Row(
+                      children: [
+                        const Icon(Icons.star_rounded, color: AppTheme.primaryYellow, size: 13),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${tool.rating}',
+                          style: TextStyle(
+                            color: isDark ? Colors.white : AppTheme.primaryBlack,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          ' (${tool.reviewCount})',
+                          style: const TextStyle(color: AppTheme.mediumGray, fontSize: 9),
+                        ),
+                        const Spacer(),
+                        const Icon(Icons.location_on_outlined, color: AppTheme.mediumGray, size: 10),
+                        Flexible(
+                          child: Text(
+                            tool.location,
+                            style: const TextStyle(color: AppTheme.mediumGray, fontSize: 9),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 2),
+                    // Price & Rent Button Row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        ShaderMask(
-                          shaderCallback: (bounds) => const LinearGradient(
-                            colors: [Color(0xFFFFD700), Color(0xFFFF8C00)],
-                          ).createShader(bounds),
-                          child: Text(
-                            '₹${tool.pricePerDay}/day',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
-                                ?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        Row(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.star,
-                                color: AppTheme.primaryYellow, size: 14),
-                            const SizedBox(width: 2),
-                            Text(tool.rating.toString(),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(fontWeight: FontWeight.w600)),
+                            const Text(
+                              'Rental Price',
+                              style: TextStyle(color: AppTheme.mediumGray, fontSize: 8),
+                            ),
+                            Text(
+                              '₹${tool.pricePerDay.toStringAsFixed(0)}/day',
+                              style: const TextStyle(
+                                color: AppTheme.primaryYellow,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFFD700), Color(0xFFFF8C00)],
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primaryYellow.withOpacity(0.3),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Text(
+                            'Rent',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ],
                     ),

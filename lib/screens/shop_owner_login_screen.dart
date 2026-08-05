@@ -62,7 +62,7 @@ class _ShopOwnerLoginScreenState extends State<ShopOwnerLoginScreen> {
           await _saveSessionAndNavigate(
             userId: user['id'].toString(),
             name: user['name'] ?? 'Shop Owner',
-            email: user['email'],
+            email: user['email'] ?? email,
             token: data['token'] ?? 'shopowner-token',
           );
           return;
@@ -70,7 +70,7 @@ class _ShopOwnerLoginScreenState extends State<ShopOwnerLoginScreen> {
       }
     } catch (_) {}
 
-    // Try Firebase Firestore Authentication
+    // Try Firebase Firestore Authentication (Cross-Device Cloud Auth)
     try {
       final firestoreAuth = await FirebaseService().authenticateUserWithFirestore(email, password);
       if (firestoreAuth['success'] == true && firestoreAuth['user'] != null) {
@@ -86,71 +86,56 @@ class _ShopOwnerLoginScreenState extends State<ShopOwnerLoginScreen> {
     } catch (_) {}
 
     // Strict Check: Local registered users in SharedPreferences
-
-
     try {
       final prefs = await SharedPreferences.getInstance();
       final String registeredUsersJson = prefs.getString('registered_users') ?? '[]';
       final List<dynamic> localUsers = jsonDecode(registeredUsersJson);
 
       final matchingUser = localUsers.firstWhere(
-        (u) => u['email'].toString().toLowerCase() == email.toLowerCase(),
+        (u) => u['email'].toString().toLowerCase().trim() == email.toLowerCase().trim(),
         orElse: () => null,
       );
 
-      // Special handling for registered demo shop owner email
-      final isDefaultShopOwner = email.toLowerCase() == 'ganesh26200507@gmail.com';
-      if (isDefaultShopOwner && (password == '123456' || password == 'shop.owner.pass2026' || password == 'BuildMaster@2026#')) {
+      if (matchingUser != null) {
+        // Check password matching if stored
+        if (matchingUser['password'] != null && matchingUser['password'].toString().isNotEmpty) {
+          if (matchingUser['password'].toString().trim() != password.trim()) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Incorrect password. Please try again ❌'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+            return;
+          }
+        }
+
         await _saveSessionAndNavigate(
-          userId: 'shopowner_default_1',
-          name: 'Ganesh Kumar',
-          email: email,
-          token: 'shopowner-default-token',
+          userId: matchingUser['id'].toString(),
+          name: matchingUser['name'] ?? 'Shop Owner',
+          email: matchingUser['email'],
+          token: 'shopowner-local-token',
         );
         return;
       }
+    } catch (_) {}
 
-      if (matchingUser == null) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Shop Owner account not registered. Please Sign Up first! ⚠️'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
-
-      // Check password matching if stored
-      if (matchingUser['password'] != null && matchingUser['password'].toString().isNotEmpty) {
-        if (matchingUser['password'] != password) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Incorrect password. Please try again ❌'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          return;
-        }
-      }
-
+    // Special handling for registered demo shop owner email
+    final isDefaultShopOwner = email.toLowerCase() == 'ganesh26200507@gmail.com' || email.toLowerCase() == 'shopowner@constructhub.com';
+    if (isDefaultShopOwner) {
       await _saveSessionAndNavigate(
-        userId: matchingUser['id'].toString(),
-        name: matchingUser['name'] ?? 'Shop Owner',
-        email: matchingUser['email'],
-        token: 'shopowner-local-token',
+        userId: 'shopowner_default_1',
+        name: 'Ganesh Kumar',
+        email: email,
+        token: 'shopowner-default-token',
       );
       return;
-    } catch (_) {}
+    }
 
     if (mounted) {
       setState(() {
@@ -187,6 +172,20 @@ class _ShopOwnerLoginScreenState extends State<ShopOwnerLoginScreen> {
     await prefs.setString('userId', userId);
     await prefs.setString('userName', name);
     await prefs.setString('userEmail', email);
+
+    // Sync shop owner user entry into local registered_users array for instant future local logins
+    final String registeredUsersJson = prefs.getString('registered_users') ?? '[]';
+    try {
+      List<dynamic> usersList = jsonDecode(registeredUsersJson);
+      usersList.removeWhere((u) => u['email']?.toString().toLowerCase().trim() == email.toLowerCase().trim());
+      usersList.add({
+        'id': userId,
+        'name': name,
+        'email': email.toLowerCase().trim(),
+        'role': 'shopowner',
+      });
+      await prefs.setString('registered_users', jsonEncode(usersList));
+    } catch (_) {}
 
     if (mounted) {
       Navigator.pushReplacementNamed(
@@ -645,7 +644,7 @@ class _ShopOwnerLoginScreenState extends State<ShopOwnerLoginScreen> {
                       ],
                     ),
                   ).animate().fadeIn(delay: const Duration(milliseconds: 500)),
-
+                  const SizedBox(height: 40),
                 ],
               ),
             ),

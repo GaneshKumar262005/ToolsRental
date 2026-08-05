@@ -19,7 +19,7 @@ class PaymentScreen extends StatefulWidget {
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
-  String _selectedPaymentMethod = 'card';
+  String _selectedPaymentMethod = 'cash';
   bool _isProcessing = false;
   bool _paymentSuccess = false;
 
@@ -130,146 +130,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 16),
             _buildPaymentMethod(
-                'card', 'Credit / Debit Card', Icons.credit_card,
-                'Visa, Mastercard, RuPay'),
-            const SizedBox(height: 12),
-            _buildPaymentMethod(
-                'upi', 'UPI Payment (GPay, PhonePe, Paytm)', Icons.account_balance,
-                'Google Pay, PhonePe, Paytm, BHIM'),
-            const SizedBox(height: 12),
-            _buildPaymentMethod('bank', 'Bank Transfer',
-                Icons.account_balance_wallet, 'Direct NEFT / RTGS Bank Transfer'),
+                'cash',
+                'Cash on Delivery 🚚',
+                Icons.local_shipping_outlined,
+                'Pay cash when you receive the tool at your site / location'),
             const SizedBox(height: 24),
-
-            // Card details form
-            if (_selectedPaymentMethod == 'card') ...[
-              Text('Card Details',
-                  style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: AppTheme.cardDecoration(context: context),
-                child: Column(
-                  children: [
-                    TextFormField(
-                      decoration: const InputDecoration(
-                        labelText: 'Card Number',
-                        hintText: '•••• •••• •••• ••••',
-                        prefixIcon: Icon(Icons.credit_card),
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            decoration: const InputDecoration(
-                              labelText: 'Expiry Date',
-                              hintText: 'MM/YY',
-                            ),
-                            keyboardType: TextInputType.number,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: TextFormField(
-                            decoration: const InputDecoration(
-                              labelText: 'CVV',
-                              hintText: '•••',
-                            ),
-                            keyboardType: TextInputType.number,
-                            obscureText: true,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-
-            // UPI Options
-            if (_selectedPaymentMethod == 'upi') ...[
-              Text('Select UPI Application',
-                  style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: AppTheme.cardDecoration(context: context),
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.phone_android, color: Colors.blue),
-                      title: const Text('Google Pay (GPay)', style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: const Text('Fast 1-click UPI checkout'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () {},
-                    ),
-                    const Divider(),
-                    ListTile(
-                      leading: const Icon(Icons.account_balance_wallet, color: Colors.purple),
-                      title: const Text('PhonePe', style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: const Text('UPI ID or Mobile Number'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () {},
-                    ),
-                    const Divider(),
-                    ListTile(
-                      leading: const Icon(Icons.payment, color: Colors.cyan),
-                      title: const Text('Paytm UPI', style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: const Text('Paytm Wallet & UPI'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () {},
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      decoration: const InputDecoration(
-                        labelText: 'Enter Custom VPA / UPI ID',
-                        hintText: 'user@okaxis / username@ybl',
-                        prefixIcon: Icon(Icons.alternate_email),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-
-            // Bank Transfer Options
-            if (_selectedPaymentMethod == 'bank') ...[
-              Text('Direct Bank Transfer Account Details',
-                  style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: AppTheme.cardDecoration(context: context),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Beneficiary Name: ConstructHub Rentals Pvt Ltd', style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
-                    const Text('Bank: HDFC Bank (Anna Nagar Branch)', style: TextStyle(color: AppTheme.mediumGray)),
-                    const SizedBox(height: 6),
-                    const Text('Account Number: 50200084920192', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryYellow)),
-                    const SizedBox(height: 6),
-                    const Text('IFSC Code: HDFC0001294', style: TextStyle(fontWeight: FontWeight.bold)),
-                    const Divider(height: 24),
-                    TextFormField(
-                      decoration: const InputDecoration(
-                        labelText: 'Transaction Reference UTR / Ref No',
-                        hintText: 'Enter 12-digit UTR No. after payment',
-                        prefixIcon: Icon(Icons.receipt_long),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
 
             // Payment details
             Text('Payment Details',
@@ -300,7 +165,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 120),
+            const SizedBox(height: 40),
           ],
         ),
       ),
@@ -319,8 +184,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         child: SafeArea(
           child: GradientButton(
             text: _isProcessing
-                ? 'Processing Payment...'
-                : 'Pay ₹${_totalPrice.toStringAsFixed(0)}',
+                ? 'Processing Order...'
+                : 'Confirm Order (Cash on Delivery)',
             onPressed: _isProcessing
                 ? null
                 : () async {
@@ -344,7 +209,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       'userName': prefs.getString('userName') ?? DummyData.currentUser.name,
                       'userPhone': DummyData.currentUser.phone,
                       'userAddress': DummyData.currentUser.location,
-                      'paymentMethod': _selectedPaymentMethod,
+                      'paymentMethod': 'cash',
                       'tool': {
                         'id': tool.id,
                         'name': tool.name,
@@ -358,7 +223,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
                     // Record transaction details
                     final List<String> recentTxns = prefs.getStringList('shop_owner_recent_txns') ?? [];
-                    final methodLabel = _selectedPaymentMethod == 'upi' ? 'Paid via UPI (GPay/PhonePe)' : (_selectedPaymentMethod == 'bank' ? 'Direct Bank Transfer' : 'Card Payment');
+                    const methodLabel = 'Cash on Delivery';
                     recentTxns.insert(0, '${tool.name}|₹${_totalPrice.toStringAsFixed(0)}|$methodLabel|Just now');
                     await prefs.setStringList('shop_owner_recent_txns', recentTxns);
 

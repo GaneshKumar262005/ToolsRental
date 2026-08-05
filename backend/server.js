@@ -79,46 +79,147 @@ function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Helper: send OTP via SMTP (Nodemailer)
+// Helper: send OTP via SMTP (Nodemailer with EmailJS Cloud Fallback)
 async function sendOtpEmail(email, name, otp) {
   try {
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const port = parseInt(process.env.SMTP_PORT || '465');
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+
+    console.log(`📡 Attempting to send email via ${host}:${port} using ${user}...`);
+
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '465'),
-      secure: parseInt(process.env.SMTP_PORT || '465') === 465,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
+      host: host,
+      port: port,
+      secure: port === 465,
+      auth: { user, pass },
+      tls: { rejectUnauthorized: false }
     });
 
     const mailOptions = {
-      from: `"BuildRent" <${process.env.SMTP_USER}>`,
+      from: `"BuildRent Support" <${user}>`,
       to: email,
-      subject: 'Your BuildRent Verification Code',
+      subject: `[OTP: ${otp}] Your BuildRent Verification Code`,
+      text: `Your verification OTP is: ${otp}`,
       html: `
-        <div style="font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px;">
-          <h2 style="color: #F4A827;">BuildRent Verification</h2>
-          <p>Hi ${name || 'User'},</p>
-          <p>Your email verification OTP is:</p>
-          <div style="background: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; border-radius: 6px; margin: 20px 0;">
+        <div style="font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; background-color: #ffffff;">
+          <h2 style="color: #F4B400;">BuildRent Verification</h2>
+          <p style="color: #333; font-size: 16px;">Hi ${name || 'User'},</p>
+          <p style="color: #555;">Your email verification code for ConstructHub is:</p>
+          <div style="background: #f8f8f8; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; border-radius: 8px; margin: 25px 0; color: #121212; border: 1px solid #F4B400;">
             ${otp}
           </div>
-          <p>It is valid for 10 minutes.</p>
-          <p>If you didn't request this, please ignore this email.</p>
+          <p style="color: #777; font-size: 14px;">This code is valid for 15 minutes. If you did not request this code, please ignore this email.</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">© 2026 ConstructHub Tool Rentals</p>
         </div>
       `,
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✉️  SMTP response: Message sent: ${info.messageId}`);
+    console.log(`✅ SMTP Success: Message ${info.messageId} sent to ${email}`);
     return true;
   } catch (err) {
-    console.error('SMTP send error:', err);
-    return false;
+    console.error('⚠️ Nodemailer SMTP failed:', err.message, '- Falling back to Cloud EmailJS...');
+    
+    // Cloud Fallback via EmailJS HTTPS API
+    try {
+      const https = require('https');
+      const data = JSON.stringify({
+        service_id: process.env.EMAILJS_SERVICE_ID || 'service_9qdeezg',
+        template_id: process.env.EMAILJS_TEMPLATE_ID || 'template_rinruwg',
+        user_id: process.env.EMAILJS_PUBLIC_KEY || 'GuD_9Grp3-Q0b4eAB',
+        accessToken: process.env.EMAILJS_PRIVATE_KEY || 'ci5RMe_6tYZd0jre4B4K3',
+        template_params: {
+          to_email: email,
+          user_email: email,
+          email: email,
+          to_name: name || 'User',
+          user_name: name || 'User',
+          name: name || 'User',
+          otp: otp,
+          OTP: otp,
+          code: otp,
+          CODE: otp,
+          otp_code: otp,
+          otpCode: otp,
+          passcode: otp,
+          PASSCODE: otp,
+          pass_code: otp,
+          passCode: otp,
+          one_time_password: otp,
+          oneTimePassword: otp,
+          verification_code: otp,
+          verificationCode: otp,
+          auth_code: otp,
+          authCode: otp,
+          password: otp,
+          PIN: otp,
+          pin: otp,
+          pin_code: otp,
+          number: otp,
+          num: otp,
+          otp_num: otp,
+          otpNum: otp,
+          otp_number: otp,
+          otpNumber: otp,
+          token: otp,
+          token_code: otp,
+          val: otp,
+          value: otp,
+          otp_val: otp,
+          vcode: otp,
+          v_code: otp,
+          pass: otp,
+          time: '15 minutes',
+          valid_time: '15 minutes',
+          valid_till: '15 minutes',
+          valid_until: '15 minutes',
+          time_till: '15 minutes',
+          until: '15 minutes',
+          expiry: '15 minutes',
+          expiry_time: '15 minutes',
+          expired_time: '15 minutes',
+          expiration: '15 minutes',
+          expires_at: '15 minutes',
+          duration: '15 minutes',
+          validity: '15 minutes',
+          date: '15 minutes',
+          message: `Your One Time Password (OTP) is: ${otp} (Valid for 15 minutes)`,
+          content: `Your One Time Password (OTP) is: ${otp} (Valid for 15 minutes)`,
+          subject: `[OTP: ${otp}] ConstructHub Verification Code`
+        }
+      });
+
+      return await new Promise((resolve) => {
+        const req = https.request('https://api.emailjs.com/api/v1.0/email/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'origin': 'http://localhost',
+            'Content-Length': Buffer.byteLength(data)
+          }
+        }, (res) => {
+          if (res.statusCode === 200) {
+            console.log(`✅ Cloud SMTP (EmailJS) Success: OTP sent to ${email}`);
+            resolve(true);
+          } else {
+            console.error(`❌ Cloud EmailJS API returned status ${res.statusCode}`);
+            resolve(false);
+          }
+        });
+        req.on('error', (e) => {
+          console.error('❌ Cloud EmailJS Error:', e.message);
+          resolve(false);
+        });
+        req.write(data);
+        req.end();
+      });
+    } catch (fallbackErr) {
+      console.error('❌ Cloud Fallback Error:', fallbackErr.message);
+      return false;
+    }
   }
 }
 
@@ -209,12 +310,16 @@ app.post('/api/signup', async (req, res) => {
       });
     }
 
-    // Determine role dynamically based on registration characteristics
-    let role = 'user';
-    if (email.toLowerCase().includes('shopowner')) {
-      role = 'shopowner';
-    } else if (email.toLowerCase().includes('admin')) {
-      role = 'admin';
+    // Determine role: use provided role if valid, otherwise fallback to guessing from email
+    let role = req.body.role || 'user';
+    if (!['user', 'shopowner', 'admin'].includes(role)) {
+      if (email.toLowerCase().includes('shopowner')) {
+        role = 'shopowner';
+      } else if (email.toLowerCase().includes('admin')) {
+        role = 'admin';
+      } else {
+        role = 'user';
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -498,10 +603,10 @@ app.post('/api/send-otp', async (req, res) => {
     const sent = await sendOtpEmail(email, name, otp);
 
     if (sent) {
-      return res.status(200).json({ success: true, message: `Verification OTP sent to ${email}` });
+      return res.status(200).json({ success: true, message: `Verification code sent to ${email}` });
     } else {
-      console.warn(`⚠️  EmailJS failed, but OTP is stored for testing: ${otp}`);
-      return res.status(200).json({ success: true, message: `OTP generated (email delivery may have failed). Dev OTP: ${otp}` });
+      console.error(`❌ SMTP failed to send email to ${email}`);
+      return res.status(500).json({ success: false, message: `Failed to send email. Please check your internet or SMTP configuration.` });
     }
   } catch (error) {
     console.error('Send OTP error:', error);

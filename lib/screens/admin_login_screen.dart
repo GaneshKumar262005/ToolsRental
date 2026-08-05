@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -173,7 +172,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                             keyboardType: TextInputType.emailAddress,
                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                             decoration: InputDecoration(
-                              hintText: 'admin.control@constructpro-secure.com',
+                              hintText: 'Enter corporate admin email',
                               hintStyle: TextStyle(color: AppTheme.mediumGray.withOpacity(0.6)),
                               prefixIcon: const Icon(Icons.shield_outlined, color: AppTheme.accentOrange),
                               fillColor: const Color(0xFF141414),
@@ -221,6 +220,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         ],
                       ),
                     ).animate().fadeIn(delay: const Duration(milliseconds: 400)),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),

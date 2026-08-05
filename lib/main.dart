@@ -24,14 +24,13 @@ import 'services/firebase_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase safely — app launches even if Firebase fails
   bool firestoreConnected = false;
   try {
-    await FirebaseService().init();
-    // Skip connection test at startup to avoid blocking the UI
-    firestoreConnected = true;
+    // Attempt initialization but don't hang if it fails
+    await FirebaseService().init().timeout(const Duration(seconds: 2));
+    firestoreConnected = FirebaseService().isInitialized;
   } catch (e) {
-    print('Firebase startup error: $e');
+    debugPrint('Firebase init failed: $e');
   }
 
   runApp(ConstructHubApp(firestoreConnected: firestoreConnected));

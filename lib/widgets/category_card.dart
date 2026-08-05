@@ -40,7 +40,7 @@ class CategoryCard extends StatelessWidget {
             ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
               child: SizedBox(
-                height: 65,
+                height: 60,
                 width: double.infinity,
                 child: AppImage(
                   imageUrl: category.imageUrl,
@@ -50,7 +50,7 @@ class CategoryCard extends StatelessWidget {
                     child: Center(
                       child: Text(
                         category.icon,
-                        style: const TextStyle(fontSize: 28),
+                        style: const TextStyle(fontSize: 24),
                       ),
                     ),
                   ),

@@ -85,14 +85,40 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         // Image
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: AppImage(
-                            imageUrl: data.imageUrl,
-                            height: 300,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
+                        Builder(
+                          builder: (context) {
+                            final isWide = MediaQuery.of(context).size.width >= 800;
+                            return Container(
+                              constraints: BoxConstraints(
+                                maxWidth: isWide ? 420 : 300,
+                                maxHeight: isWide ? 220 : 180,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E1E1E),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: AppTheme.primaryYellow.withOpacity(0.4),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.4),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: AppImage(
+                                  imageUrl: data.imageUrl,
+                                  height: double.infinity,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            );
+                          },
                         ).animate().fadeIn().slideY(),
                         const SizedBox(height: 40),
                         // Title

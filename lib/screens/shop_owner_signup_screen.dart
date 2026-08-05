@@ -112,29 +112,31 @@ class _ShopOwnerSignupScreenState extends State<ShopOwnerSignupScreen> {
             return AlertDialog(
               backgroundColor: AppTheme.primaryBlack,
               title: const Text('Verify Shop Owner Email', style: TextStyle(color: AppTheme.primaryWhite)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('We sent a 6-digit verification code to $email', style: const TextStyle(color: AppTheme.mediumGray)),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: otpController,
-                    style: const TextStyle(color: AppTheme.primaryWhite, letterSpacing: 8, fontSize: 24, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: AppTheme.darkGray,
-                      counterText: '',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppTheme.primaryYellow, width: 2),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('We sent a 6-digit verification code to $email', style: const TextStyle(color: AppTheme.mediumGray)),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: otpController,
+                      style: const TextStyle(color: AppTheme.primaryWhite, letterSpacing: 8, fontSize: 24, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: AppTheme.darkGray,
+                        counterText: '',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: AppTheme.primaryYellow, width: 2),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -236,10 +238,10 @@ class _ShopOwnerSignupScreenState extends State<ShopOwnerSignupScreen> {
       final shopOwnerData = {
         'id': userId,
         'name': name,
-        'email': email,
+        'email': email.trim().toLowerCase(),
         'phone': phone,
         'location': location,
-        'password': password,
+        'password': password.trim(),
         'role': 'shopowner',
         'registeredAt': DateTime.now().toIso8601String(),
       };
@@ -248,13 +250,16 @@ class _ShopOwnerSignupScreenState extends State<ShopOwnerSignupScreen> {
       // Permanently store in registered_users persistent list
       final String registeredUsersJson = prefs.getString('registered_users') ?? '[]';
       List<dynamic> usersList = jsonDecode(registeredUsersJson);
-      usersList.removeWhere((u) => u['email'] == email);
+      usersList.removeWhere((u) => u['email']?.toString().toLowerCase().trim() == email.trim().toLowerCase());
       usersList.add(shopOwnerData);
 
       await prefs.setString('registered_users', jsonEncode(usersList));
 
       // Send welcome email
       EmailService.sendWelcomeEmail(name: name, email: email);
+
+      // Sync Session to Cloud (Auto-login for Laptop/Other devices)
+      await FirebaseService().updateSessionState(email, true, role: 'shopowner', name: name);
 
 
       if (mounted) {
@@ -502,25 +507,34 @@ class _ShopOwnerSignupScreenState extends State<ShopOwnerSignupScreen> {
                   ).animate().fadeIn(delay: const Duration(milliseconds: 800)),
                   const SizedBox(height: 24),
                   // Login link
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Already have an account? ',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          'Login',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppTheme.primaryYellow,
-                                fontWeight: FontWeight.bold,
-                              ),
+                  Center(
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          'Already have an account? ',
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
-                      ),
-                    ],
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Login',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: AppTheme.primaryYellow,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ).animate().fadeIn(delay: const Duration(milliseconds: 900)),
+                  const SizedBox(height: 60),
                 ],
               ),
             ),

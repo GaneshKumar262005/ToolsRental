@@ -43,8 +43,6 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  String? _generatedOtp;
-
   Future<void> _signup() async {
     if (_formKey.currentState?.validate() ?? false) {
       if (!_agreeToTerms) {
@@ -71,6 +69,12 @@ class _SignupScreenState extends State<SignupScreen> {
         if (otpResponse['success'] == true) {
           // 2. Show OTP Dialog to verify
           if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(otpResponse['message'] ?? 'Please check your email for the verification code'),
+                backgroundColor: Colors.green,
+              ),
+            );
             _showOtpDialog(name, email, phone, location, password);
           }
         } else {
@@ -78,7 +82,7 @@ class _SignupScreenState extends State<SignupScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(otpResponse['message'] ?? 'Failed to send OTP via Email. Please try again.'),
+                content: Text(otpResponse['message'] ?? 'Failed to send OTP. Please try again.'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -116,29 +120,31 @@ class _SignupScreenState extends State<SignupScreen> {
             return AlertDialog(
               backgroundColor: AppTheme.primaryBlack,
               title: const Text('Verify Email', style: TextStyle(color: AppTheme.primaryWhite)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('We sent a 6-digit code to $email', style: const TextStyle(color: AppTheme.mediumGray)),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: otpController,
-                    style: const TextStyle(color: AppTheme.primaryWhite, letterSpacing: 8, fontSize: 24, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: AppTheme.darkGray,
-                      counterText: '',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppTheme.primaryYellow, width: 2),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('We sent a 6-digit code to $email', style: const TextStyle(color: AppTheme.mediumGray)),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: otpController,
+                      style: const TextStyle(color: AppTheme.primaryWhite, letterSpacing: 8, fontSize: 24, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: AppTheme.darkGray,
+                        counterText: '',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: AppTheme.primaryYellow, width: 2),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -201,7 +207,7 @@ class _SignupScreenState extends State<SignupScreen> {
             'password': password,
             'role': 'user',
           }),
-        ).timeout(const Duration(seconds: 4));
+        ).timeout(const Duration(seconds: 2));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
@@ -236,10 +242,10 @@ class _SignupScreenState extends State<SignupScreen> {
       final userAccountData = {
         'id': userId,
         'name': name,
-        'email': email,
+        'email': email.trim().toLowerCase(),
         'phone': phone,
         'location': location,
-        'password': password,
+        'password': password.trim(),
         'role': 'user',
         'registeredAt': DateTime.now().toIso8601String(),
       };
@@ -248,13 +254,16 @@ class _SignupScreenState extends State<SignupScreen> {
       // 4. Permanently store in registered_users persistent list
       final String registeredUsersJson = prefs.getString('registered_users') ?? '[]';
       List<dynamic> usersList = jsonDecode(registeredUsersJson);
-      usersList.removeWhere((u) => u['email'] == email);
+      usersList.removeWhere((u) => u['email']?.toString().toLowerCase().trim() == email.trim().toLowerCase());
       usersList.add(userAccountData);
 
       await prefs.setString('registered_users', jsonEncode(usersList));
 
       // 5. Send Welcome Email
       EmailService.sendWelcomeEmail(name: name, email: email);
+
+      // 6. Sync Session to Cloud (Auto-login for Laptop/Other devices)
+      await FirebaseService().updateSessionState(email, true, role: 'user', name: name);
 
 
       if (mounted) {
@@ -313,7 +322,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
-                  ).animate().fadeIn(),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 50)),
                   const SizedBox(height: 8),
                   Text(
                     'Start renting construction tools today',
@@ -326,7 +335,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   Text(
                     'Full Name',
                     style: Theme.of(context).textTheme.titleSmall,
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 200)),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 150)),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _nameController,
@@ -340,13 +349,13 @@ class _SignupScreenState extends State<SignupScreen> {
                       }
                       return null;
                     },
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 200)),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 150)),
                   const SizedBox(height: 20),
                   // Email field
                   Text(
                     'Email',
                     style: Theme.of(context).textTheme.titleSmall,
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 300)),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 200)),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _emailController,
@@ -364,13 +373,13 @@ class _SignupScreenState extends State<SignupScreen> {
                       }
                       return null;
                     },
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 300)),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 200)),
                   const SizedBox(height: 20),
                   // Phone field
                   Text(
                     'Phone Number',
                     style: Theme.of(context).textTheme.titleSmall,
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 400)),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 250)),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _phoneController,
@@ -385,13 +394,13 @@ class _SignupScreenState extends State<SignupScreen> {
                       }
                       return null;
                     },
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 400)),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 250)),
                   const SizedBox(height: 20),
                   // Location field
                   Text(
                     'Location',
                     style: Theme.of(context).textTheme.titleSmall,
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 450)),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 300)),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _locationController,
@@ -405,13 +414,13 @@ class _SignupScreenState extends State<SignupScreen> {
                       }
                       return null;
                     },
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 450)),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 300)),
                   const SizedBox(height: 20),
                   // Password field
                   Text(
                     'Password',
                     style: Theme.of(context).textTheme.titleSmall,
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 500)),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 350)),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _passwordController,
@@ -441,13 +450,13 @@ class _SignupScreenState extends State<SignupScreen> {
                       }
                       return null;
                     },
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 500)),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 350)),
                   const SizedBox(height: 20),
                   // Confirm password field
                   Text(
                     'Confirm Password',
                     style: Theme.of(context).textTheme.titleSmall,
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 600)),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 400)),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _confirmPasswordController,
@@ -477,7 +486,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       }
                       return null;
                     },
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 600)),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 400)),
                   const SizedBox(height: 12),
                   // Terms checkbox
                   Row(
@@ -498,18 +507,19 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ),
                     ],
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 700)),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 450)),
                   const SizedBox(height: 24),
                   // Signup button
                   GradientButton(
                     text: _isLoading ? 'Creating Account...' : 'Create Account',
                     onPressed: _isLoading ? null : _signup,
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 800)),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 500)),
                   const SizedBox(height: 16),
                   // Login link
                   Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
                           'Already have an account? ',
@@ -517,6 +527,11 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
                           child: Text(
                             'Login',
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -528,6 +543,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       ],
                     ),
                   ).animate().fadeIn(delay: const Duration(milliseconds: 900)),
+                  const SizedBox(height: 60),
                 ],
               ),
             ),

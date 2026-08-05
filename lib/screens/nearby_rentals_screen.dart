@@ -7,6 +7,8 @@ import '../widgets/tool_card.dart';
 import '../widgets/dark_location_map.dart';
 import 'booking_screen.dart';
 
+import 'vendor_detail_screen.dart';
+
 class NearbyRentalsScreen extends StatefulWidget {
   const NearbyRentalsScreen({super.key});
 
@@ -45,7 +47,12 @@ class _NearbyRentalsScreenState extends State<NearbyRentalsScreen> {
                     VendorCard(
                       vendor: vendor,
                       onTap: () {
-                        _showVendorBottomSheet(vendor);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => VendorDetailScreen(vendor: vendor),
+                          ),
+                        );
                       },
                     ),
                     if (index < DummyData.vendors.length - 1) const SizedBox(height: 12),
@@ -128,27 +135,39 @@ class _NearbyRentalsScreenState extends State<NearbyRentalsScreen> {
             const Divider(),
             // Available tools
             Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.68,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: DummyData.tools.take(4).length,
-                itemBuilder: (context, index) {
-                  final tool = DummyData.tools[index];
-                  return ToolCard(
-                    tool: tool,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => BookingScreen(tool: tool),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = MediaQuery.of(context).size.width;
+                  final crossAxisCount = width >= 1200 ? 4 : (width >= 800 ? 3 : 2);
+                  final childAspectRatio = width >= 1200 ? 0.90 : (width >= 800 ? 0.85 : 0.64);
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1200),
+                      child: GridView.builder(
+                        padding: const EdgeInsets.all(16),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          childAspectRatio: childAspectRatio,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
                         ),
-                      );
-                    },
+                        itemCount: DummyData.tools.take(4).length,
+                        itemBuilder: (context, index) {
+                          final tool = DummyData.tools[index];
+                          return ToolCard(
+                            tool: tool,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => BookingScreen(tool: tool),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
                   );
                 },
               ),

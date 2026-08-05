@@ -1307,7 +1307,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               height: 36,
                               child: AppImage(
                                 imageUrl: _categories[i]['image'] as String,
-                                fit: BoxFit.cover,
+                                fit: BoxFit.contain,
                                 errorWidget: Icon(
                                   _categories[i]['icon'] as IconData,
                                   color: selected
@@ -1362,18 +1362,30 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
             // Tools Grid
             Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 14,
-                  childAspectRatio: 0.53,
-                ),
-                itemCount: _filteredTools.length,
-                itemBuilder: (context, i) {
-                  final tool = _filteredTools[i];
-                  return _buildToolCard(tool);
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = MediaQuery.of(context).size.width;
+                  final crossAxisCount = width >= 1200 ? 4 : (width >= 800 ? 3 : 2);
+                  final childAspectRatio = width >= 1200 ? 0.90 : (width >= 800 ? 0.85 : 0.59);
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1200),
+                      child: GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: childAspectRatio,
+                        ),
+                        itemCount: _filteredTools.length,
+                        itemBuilder: (context, i) {
+                          final tool = _filteredTools[i];
+                          return _buildToolCard(tool);
+                        },
+                      ),
+                    ),
+                  );
                 },
               ),
             ),
@@ -1385,6 +1397,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
 
   Widget _buildToolCard(Map<String, dynamic> tool) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    final imageHeight = isMobile ? 102.0 : 135.0;
+
     return GestureDetector(
       onTap: () => _navigateToBooking(tool),
       child: Container(
@@ -1403,25 +1418,33 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image + badges
+            // Small Image + Badges (styled like Splash screen image container)
             Stack(
               children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
+                Container(
+                  height: imageHeight,
+                  width: double.infinity,
+                  margin: EdgeInsets.all(isMobile ? 5 : 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2A2A2A),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withOpacity(0.05)),
                   ),
-                  child: AspectRatio(
-                    aspectRatio: 1.25,
-                    child: AppImage(
-                      imageUrl: tool['image'] as String,
-                      fit: BoxFit.cover,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: AppImage(
+                        imageUrl: tool['image'] as String,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                 ),
                 if (!(tool['available'] as bool))
                   Positioned(
-                    top: 8,
-                    left: 8,
+                    top: 12,
+                    left: 12,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(
@@ -1439,11 +1462,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     ),
                   ),
                 Positioned(
-                  top: 8,
-                  right: 8,
+                  top: 12,
+                  right: 12,
                   child: Container(
-                    width: 28,
-                    height: 28,
+                    width: 26,
+                    height: 26,
                     decoration: const BoxDecoration(
                       color: Colors.black54,
                       shape: BoxShape.circle,
@@ -1451,7 +1474,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     child: const Icon(
                       Icons.favorite_border,
                       color: AppTheme.primaryYellow,
-                      size: 15,
+                      size: 14,
                     ),
                   ),
                 ),
@@ -1461,32 +1484,56 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             // Card Text Details
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Category Tag
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryYellow.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        ((tool['category'] as String?) ?? 'Tool').toUpperCase(),
+                        style: const TextStyle(
+                          color: AppTheme.primaryYellow,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
                     Text(
                       tool['name'] as String,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 3),
                     Row(
                       children: [
-                        const Icon(Icons.star_rounded, color: AppTheme.primaryYellow, size: 13),
-                        const SizedBox(width: 3),
+                        const Icon(Icons.star_rounded, color: AppTheme.primaryYellow, size: 14),
+                        const SizedBox(width: 2),
                         Text(
-                          '${tool['rating']} (${tool['reviews']})',
-                          style: const TextStyle(color: Colors.white60, fontSize: 10),
+                          '${tool['rating']}',
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          ' (${tool['reviews']})',
+                          style: const TextStyle(color: Colors.white60, fontSize: 9),
                         ),
                         const Spacer(),
                         const Icon(Icons.location_on_outlined, color: AppTheme.mediumGray, size: 10),
-                        Expanded(
+                        Flexible(
                           child: Text(
                             tool['location'] as String,
                             style: const TextStyle(color: AppTheme.mediumGray, fontSize: 9),
@@ -1496,48 +1543,42 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'High-performance ${tool['category']} ready for rental with site delivery compliance.',
-                      style: const TextStyle(color: Colors.white54, fontSize: 10, height: 1.2),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
+                    const SizedBox(height: 2),
+                    // Rate + Website Rent Button Row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Rate:', style: TextStyle(color: AppTheme.mediumGray, fontSize: 10)),
-                        Text(
-                          '₹${tool['price']}/day',
-                          style: const TextStyle(
-                            color: AppTheme.primaryYellow,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Rate', style: TextStyle(color: AppTheme.mediumGray, fontSize: 8)),
+                            Text(
+                              '₹${tool['price']}/day',
+                              style: const TextStyle(
+                                color: AppTheme.primaryYellow,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryYellow,
+                            foregroundColor: AppTheme.primaryBlack,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            elevation: 2,
+                          ),
+                          onPressed: () => _navigateToBooking(tool),
+                          child: const Text(
+                            'Rent Now ⚡',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 9),
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Rent Now Prominent Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 32,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryYellow,
-                          foregroundColor: AppTheme.primaryBlack,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          padding: EdgeInsets.zero,
-                          elevation: 2,
-                        ),
-                        onPressed: () => _navigateToBooking(tool),
-                        child: const Text(
-                          'Rent Now ⚡',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-                        ),
-                      ),
                     ),
                   ],
                 ),

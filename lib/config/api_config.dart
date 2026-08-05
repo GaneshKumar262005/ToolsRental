@@ -7,7 +7,9 @@ class ApiConfig {
   // For web development: use 'localhost'
   
   // Current LAN IP of your machine for real mobile devices on Wi-Fi
-  static const String _lanHost = '10.96.23.148';
+  // ⚠️ If "Server" dot is RED, update this IP to your computer's current Wi-Fi IP
+  static const String _lanHost = '10.242.206.148';
+
   
   static String get baseUrl {
     if (kIsWeb) {

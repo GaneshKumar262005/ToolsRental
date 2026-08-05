@@ -47,11 +47,14 @@ class _BookingScreenState extends State<BookingScreen> {
       appBar: AppBar(
         title: const Text('Book Tool'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             // Tool summary
             Container(
               padding: const EdgeInsets.all(16),
@@ -390,74 +393,17 @@ class _BookingScreenState extends State<BookingScreen> {
               child: Column(
                 children: [
                   RadioListTile<String>(
-                    title: const Text('Cash on Delivery', style: TextStyle(color: Colors.black87)),
-                    subtitle: const Text('Pay when you receive the tool', style: TextStyle(color: Colors.black54)),
+                    title: const Text('Cash on Delivery 🚚', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+                    subtitle: const Text('Pay cash when you receive the tool at your site / location', style: TextStyle(color: Colors.black54)),
                     value: 'cash',
-                    groupValue: _selectedPaymentMethod,
+                    groupValue: 'cash',
                     onChanged: (value) {
                       setState(() {
-                        _selectedPaymentMethod = value!;
-                        _paymentDetailsController.text = '';
+                        _selectedPaymentMethod = 'cash';
                       });
                     },
+                    activeColor: AppTheme.primaryYellow,
                   ),
-                  RadioListTile<String>(
-                    title: const Text('Card Payment', style: TextStyle(color: Colors.black87)),
-                    subtitle: const Text('Pay with credit/debit card', style: TextStyle(color: Colors.black54)),
-                    value: 'card',
-                    groupValue: _selectedPaymentMethod,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedPaymentMethod = value!;
-                        _paymentDetailsController.text = '';
-                      });
-                    },
-                  ),
-                  RadioListTile<String>(
-                    title: const Text('UPI Payment', style: TextStyle(color: Colors.black87)),
-                    subtitle: const Text('Pay with UPI (Google Pay, PhonePe, etc.)', style: TextStyle(color: Colors.black54)),
-                    value: 'upi',
-                    groupValue: _selectedPaymentMethod,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedPaymentMethod = value!;
-                        _paymentDetailsController.text = '';
-                      });
-                    },
-                  ),
-                  RadioListTile<String>(
-                    title: const Text('Bank Transfer', style: TextStyle(color: Colors.black87)),
-                    subtitle: const Text('Direct bank transfer', style: TextStyle(color: Colors.black54)),
-                    value: 'bank',
-                    groupValue: _selectedPaymentMethod,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedPaymentMethod = value!;
-                        _paymentDetailsController.text = '';
-                      });
-                    },
-                  ),
-                  if (_selectedPaymentMethod != 'cash')
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: TextFormField(
-                        controller: _paymentDetailsController,
-                        decoration: InputDecoration(
-                          hintText: _selectedPaymentMethod == 'card'
-                              ? 'Enter card number'
-                              : _selectedPaymentMethod == 'upi'
-                                  ? 'Enter UPI ID'
-                                  : 'Enter bank account details',
-                          border: const OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value?.isEmpty ?? true) {
-                            return 'Please enter payment details';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -465,7 +411,9 @@ class _BookingScreenState extends State<BookingScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: Container(
+    ),
+  ),
+  bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppTheme.primaryWhite,

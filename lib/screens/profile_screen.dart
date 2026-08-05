@@ -12,6 +12,7 @@ import '../dummy_data/dummy_data.dart';
 import '../themes/app_theme.dart';
 import '../models/user_model.dart';
 import '../config/api_config.dart';
+import '../services/firebase_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -216,18 +217,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Change Password',
                     Icons.lock_outline,
                     () => _showChangePasswordDialog(),
-                  ),
-                  const Divider(height: 1),
-                  _buildMenuOption(
-                    'Payment Methods',
-                    Icons.payment_outlined,
-                    () => _showPaymentMethodsDialog(),
-                  ),
-                  const Divider(height: 1),
-                  _buildMenuOption(
-                    'Payment History',
-                    Icons.history_outlined,
-                    () => Navigator.pushNamed(context, '/payment-history'),
                   ),
                   const Divider(height: 1),
                   _buildMenuOption(
@@ -584,7 +573,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ElevatedButton(
             onPressed: () async {
               final prefs = await SharedPreferences.getInstance();
-              await prefs.clear();
+              final email = prefs.getString('userEmail') ?? '';
+              
+              // Clear Cloud Session
+              if (email.isNotEmpty) {
+                await FirebaseService().updateSessionState(email, false);
+              }
+
+              // Only remove session keys, KEEP registered_users
+              await prefs.remove('token');
+              await prefs.remove('role');
+              await prefs.remove('userId');
+              await prefs.remove('userName');
+              await prefs.remove('userEmail');
+              await prefs.remove('profileImageBase64');
+              await prefs.remove('profileImagePath');
+              await prefs.remove('admin_authenticated');
+              await prefs.remove('admin_email');
+
               if (mounted) {
                 Navigator.pop(context);
                 Navigator.pushReplacementNamed(context, '/login');

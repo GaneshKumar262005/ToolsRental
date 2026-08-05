@@ -1,9 +1,9 @@
+// ignore_for_file: unused_field
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../themes/app_theme.dart';
 import '../config/api_config.dart';
 import '../models/tool_model.dart';
@@ -22,7 +22,7 @@ class ShopOwnerDashboardScreen extends StatefulWidget {
 }
 
 class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
-  int _selectedNavIndex = 1; // Default to Shop Verification until approved
+  int _selectedNavIndex = 0; // Default to Bookings Dashboard
   List<dynamic> _bookings = [];
   bool _isLoading = true;
 
@@ -268,10 +268,38 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
   Future<void> _loadVerificationStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final String email = prefs.getString('userEmail') ?? DummyData.currentUser.email;
-    final String emailStatus = prefs.getString('shop_verification_status_${email.toLowerCase()}') ?? '';
-    final String globalStatus = prefs.getString('shop_verification_status') ?? 'pending';
 
-    final status = emailStatus.isNotEmpty ? emailStatus : globalStatus;
+    String status = 'pending';
+    try {
+      final cloudVerifications = await FirebaseService().fetchShopVerifications();
+      final myVerif = cloudVerifications.firstWhere(
+        (v) => v['email']?.toString().toLowerCase().trim() == email.toLowerCase().trim(),
+        orElse: () => {},
+      );
+      if (myVerif.isNotEmpty && myVerif['status'] != null) {
+        status = myVerif['status'].toString();
+      } else {
+        final String emailStatus = prefs.getString('shop_verification_status_${email.toLowerCase()}') ?? '';
+        final String globalStatus = prefs.getString('shop_verification_status') ?? '';
+        if (emailStatus.isNotEmpty) {
+          status = emailStatus;
+        } else if (globalStatus.isNotEmpty) {
+          status = globalStatus;
+        } else {
+          status = 'pending';
+        }
+      }
+    } catch (_) {
+      final String emailStatus = prefs.getString('shop_verification_status_${email.toLowerCase()}') ?? '';
+      final String globalStatus = prefs.getString('shop_verification_status') ?? '';
+      if (emailStatus.isNotEmpty) {
+        status = emailStatus;
+      } else if (globalStatus.isNotEmpty) {
+        status = globalStatus;
+      } else {
+        status = 'pending';
+      }
+    }
 
     setState(() {
       _verificationStatus = status;
@@ -280,11 +308,8 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
       _addressController.text = prefs.getString('shop_verification_address') ?? 'T. Nagar, Chennai';
       _phoneController.text = prefs.getString('shop_verification_phone') ?? '+91 98765 43210';
 
-      if (status == 'approved') {
-        _selectedNavIndex = 0;
-      } else {
-        _selectedNavIndex = 1;
-      }
+      // Default to Bookings Dashboard
+      _selectedNavIndex = 0;
     });
   }
 
@@ -305,13 +330,17 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
     });
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('shop_verification_status', 'pending');
+    final String shopEmail = prefs.getString('userEmail') ?? DummyData.currentUser.email;
+
+    const newStatus = 'pending';
+
+    await prefs.setString('shop_verification_status', newStatus);
+    await prefs.setString('shop_verification_status_${shopEmail.toLowerCase()}', newStatus);
     await prefs.setString('shop_verification_name', _shopNameController.text.trim());
     await prefs.setString('shop_verification_gst', _gstController.text.trim());
     await prefs.setString('shop_verification_address', _addressController.text.trim());
     await prefs.setString('shop_verification_phone', _phoneController.text.trim());
 
-    final String shopEmail = prefs.getString('userEmail') ?? DummyData.currentUser.email;
     final vendorData = {
       'id': 'v_shop_${DateTime.now().millisecondsSinceEpoch}',
       'name': _shopNameController.text.trim(),
@@ -319,7 +348,7 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
       'email': shopEmail,
       'location': _addressController.text.trim(),
       'phone': _phoneController.text.trim(),
-      'status': 'pending',
+      'status': newStatus,
       'submittedAt': DateTime.now().toIso8601String(),
     };
 
@@ -329,12 +358,9 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
       pendingList.insert(0, vendorData);
     }
     await prefs.setString('pending_vendors', jsonEncode(pendingList));
-    await prefs.setString('shop_verification_status_${shopEmail.toLowerCase()}', 'pending');
 
     // Save to Firebase Firestore via FirebaseService
     await FirebaseService().saveShopVerification(vendorData);
-
-
 
     DummyData.notifications.insert(
       0,
@@ -357,8 +383,48 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Shop verification application submitted to Admin for approval! ⏳'),
+          content: Text('Shop verification request submitted! Awaiting Admin Acceptance ⏳'),
           backgroundColor: Colors.orange,
+        ),
+      );
+    }
+  }
+
+  Future<void> _approveShopByAdmin() async {
+    setState(() {
+      _isSubmittingVerification = true;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    final String shopEmail = prefs.getString('userEmail') ?? DummyData.currentUser.email;
+    const newStatus = 'approved';
+
+    await prefs.setString('shop_verification_status', newStatus);
+    await prefs.setString('shop_verification_status_${shopEmail.toLowerCase()}', newStatus);
+
+    final approvedVendorData = {
+      'id': 'v_shop_${DateTime.now().millisecondsSinceEpoch}',
+      'name': _shopNameController.text.trim().isNotEmpty ? _shopNameController.text.trim() : 'BuildRight Hardware',
+      'gst': _gstController.text.trim().isNotEmpty ? _gstController.text.trim() : '33AAAAA0000A1Z5',
+      'email': shopEmail,
+      'location': _addressController.text.trim().isNotEmpty ? _addressController.text.trim() : 'T. Nagar, Chennai',
+      'phone': _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : '+91 98765 43210',
+      'status': newStatus,
+      'approvedAt': DateTime.now().toIso8601String(),
+    };
+
+    await FirebaseService().saveShopVerification(approvedVendorData);
+
+    if (mounted) {
+      setState(() {
+        _verificationStatus = newStatus;
+        _isSubmittingVerification = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Shop Application accepted & approved by Admin! ✓ Bookings, Profile & Notifications unlocked.'),
+          backgroundColor: Colors.green,
         ),
       );
     }
@@ -676,31 +742,28 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
 
   void _logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    final email = prefs.getString('userEmail') ?? '';
+
+    // Clear Cloud Session
+    if (email.isNotEmpty) {
+      await FirebaseService().updateSessionState(email, false);
+    }
+    
+    // Selective clear: KEEP registered_users
+    await prefs.remove('token');
+    await prefs.remove('role');
+    await prefs.remove('userId');
+    await prefs.remove('userName');
+    await prefs.remove('userEmail');
+    await prefs.remove('profileImageBase64');
+    await prefs.remove('profileImagePath');
+
     if (mounted) {
       Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
   void _selectTab(int index) {
-    if (_verificationStatus != 'approved' && index == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: const [
-              Icon(Icons.lock, color: Colors.white),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text('Bookings Dashboard is locked until Admin approves your Shop Verification ⏳'),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.orange.shade900,
-          duration: const Duration(seconds: 4),
-        ),
-      );
-      return;
-    }
     setState(() {
       _selectedNavIndex = index;
     });
@@ -738,8 +801,6 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWideScreen = MediaQuery.of(context).size.width >= 800;
-
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -749,11 +810,6 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: _confirmLogout,
-            tooltip: 'Logout',
-          ),
           title: Text(_getAppBarTitle()),
           actions: [
             IconButton(
@@ -771,15 +827,43 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
             ),
           ],
         ),
-        drawer: isWideScreen ? null : _buildSidebarNavigation(isDrawer: true),
-        body: Row(
-          children: [
-            if (isWideScreen) _buildSidebarNavigation(isDrawer: false),
-            Expanded(
-              child: Container(
-                color: const Color(0xFF121212),
-                child: _buildSelectedTabContent(),
-              ),
+        body: Container(
+          color: const Color(0xFF121212),
+          child: _buildSelectedTabContent(),
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _selectedNavIndex,
+          onTap: (index) {
+            setState(() {
+              _selectedNavIndex = index;
+            });
+          },
+          backgroundColor: const Color(0xFF1E1E1E),
+          selectedItemColor: AppTheme.primaryYellow,
+          unselectedItemColor: Colors.white60,
+          type: BottomNavigationBarType.fixed,
+          selectedFontSize: 11,
+          unselectedFontSize: 11,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home_rounded, color: AppTheme.primaryYellow),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.build_outlined),
+              activeIcon: Icon(Icons.build_rounded, color: AppTheme.primaryYellow),
+              label: 'Rentals',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.notifications_none_outlined),
+              activeIcon: Icon(Icons.notifications_rounded, color: AppTheme.primaryYellow),
+              label: 'Notifications',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person_rounded, color: AppTheme.primaryYellow),
+              label: 'Profile',
             ),
           ],
         ),
@@ -790,223 +874,16 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
   String _getAppBarTitle() {
     switch (_selectedNavIndex) {
       case 0:
-        return 'Bookings Dashboard';
+        return 'Shop Owner Dashboard';
       case 1:
-        return 'Shop Verification Portal';
+        return 'Rentals & Accounts Payouts';
       case 2:
         return 'Shop Owner Notifications';
       case 3:
-        return 'Accounts & Revenue Payouts';
-      case 4:
         return 'Vendor Profile & Settings';
       default:
         return 'Shop Owner Dashboard';
     }
-  }
-
-  Widget _buildSidebarNavigation({required bool isDrawer}) {
-    final isApproved = _verificationStatus == 'approved';
-
-    final navContent = Container(
-      width: 250,
-      color: const Color(0xFF1E1E1E),
-      child: Column(
-        children: [
-          // Vendor Profile Header with Glow Accent & DP Click
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.primaryYellow,
-                  AppTheme.primaryYellow.withOpacity(0.8),
-                ],
-              ),
-            ),
-            child: SafeArea(
-              child: Column(
-                children: [
-                  GestureDetector(
-                    onTap: _showDpPicker,
-                    child: Stack(
-                      children: [
-                        _buildAvatarWidget(radius: 32),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: AppTheme.primaryBlack,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.camera_alt, size: 12, color: AppTheme.primaryYellow),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    _userName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: AppTheme.primaryBlack,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    _userEmail,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Colors.black87,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isApproved ? Colors.green : Colors.black87,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isApproved ? Icons.check_circle : Icons.lock_clock,
-                          color: Colors.white,
-                          size: 12,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          isApproved ? 'VERIFIED VENDOR' : 'APPROVAL PENDING',
-                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const Divider(height: 1),
-          // Nav Items
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              children: [
-                ListTile(
-                  leading: Icon(
-                    isApproved ? Icons.dashboard_rounded : Icons.lock_rounded,
-                    color: _selectedNavIndex == 0
-                        ? AppTheme.primaryYellow
-                        : (isApproved ? Colors.white70 : Colors.redAccent),
-                  ),
-                  title: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Bookings Dashboard',
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: _selectedNavIndex == 0
-                                ? AppTheme.primaryYellow
-                                : (isApproved ? Colors.white : Colors.white38),
-                            fontWeight: _selectedNavIndex == 0 ? FontWeight.bold : FontWeight.normal,
-                            decoration: isApproved ? null : TextDecoration.lineThrough,
-                          ),
-                        ),
-                      ),
-                      if (!isApproved) ...[
-                        const SizedBox(width: 4),
-                        const Icon(Icons.lock, size: 14, color: Colors.orange),
-                      ],
-                    ],
-                  ),
-                  selected: _selectedNavIndex == 0,
-                  onTap: () {
-                    if (isDrawer) Navigator.pop(context);
-                    _selectTab(0);
-                  },
-                ),
-                ListTile(
-                  leading: Icon(
-                    Icons.verified_user_rounded,
-                    color: _selectedNavIndex == 1 ? AppTheme.primaryYellow : Colors.white70,
-                  ),
-                  title: const Text(
-                    'Shop Verification',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  selected: _selectedNavIndex == 1,
-                  onTap: () {
-                    if (isDrawer) Navigator.pop(context);
-                    _selectTab(1);
-                  },
-                ),
-                ListTile(
-                  leading: Icon(
-                    Icons.notifications_active_rounded,
-                    color: _selectedNavIndex == 2 ? AppTheme.primaryYellow : Colors.white70,
-                  ),
-                  title: const Text(
-                    'Notifications',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  selected: _selectedNavIndex == 2,
-                  onTap: () {
-                    if (isDrawer) Navigator.pop(context);
-                    _selectTab(2);
-                  },
-                ),
-                ListTile(
-                  leading: Icon(
-                    Icons.account_balance_wallet_rounded,
-                    color: _selectedNavIndex == 3 ? AppTheme.primaryYellow : Colors.white70,
-                  ),
-                  title: const Text(
-                    'Accounts & Payouts',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  selected: _selectedNavIndex == 3,
-                  onTap: () {
-                    if (isDrawer) Navigator.pop(context);
-                    _selectTab(3);
-                  },
-                ),
-                ListTile(
-                  leading: Icon(
-                    Icons.person_rounded,
-                    color: _selectedNavIndex == 4 ? AppTheme.primaryYellow : Colors.white70,
-                  ),
-                  title: const Text(
-                    'Profile',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  selected: _selectedNavIndex == 4,
-                  onTap: () {
-                    if (isDrawer) Navigator.pop(context);
-                    _selectTab(4);
-                  },
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.redAccent),
-            title: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
-            onTap: _confirmLogout,
-          ),
-        ],
-      ),
-    );
-
-    return isDrawer ? Drawer(child: navContent) : navContent;
   }
 
   Widget _buildSelectedTabContent() {
@@ -1014,19 +891,15 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
       case 0:
         return _buildBookingsTab();
       case 1:
-        return _buildVerificationTab();
+        return _buildAccountsTab();
       case 2:
         return _buildNotificationsTab();
       case 3:
-        return _buildAccountsTab();
-      case 4:
         return _buildProfileTab();
       default:
-        return _buildVerificationTab();
+        return _buildBookingsTab();
     }
   }
-
-
 
   Widget _buildBookingsTab() {
     if (_isLoading) {
@@ -1247,6 +1120,7 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildVerificationTab() {
     final isApproved = _verificationStatus == 'approved';
     final isPending = _verificationStatus == 'pending';
@@ -1406,25 +1280,69 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
                 ),
                 const SizedBox(height: 28),
 
-                if (!isApproved)
+                if (isApproved)
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
+                    height: 54,
                     child: ElevatedButton.icon(
-                      onPressed: _isSubmittingVerification ? null : _submitVerification,
-                      icon: _isSubmittingVerification
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black))
-                          : const Icon(Icons.send_rounded),
-                      label: Text(
-                        isRejected ? 'Re-Submit for Admin Approval' : 'Submit for Admin Approval',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      onPressed: () {
+                        setState(() {
+                          _selectedNavIndex = 0; // Navigate to Bookings Dashboard
+                        });
+                      },
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 22),
+                      label: const Text(
+                        'Next ➔ Go to Bookings Dashboard',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryYellow,
                         foregroundColor: AppTheme.primaryBlack,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        elevation: 4,
                       ),
                     ),
+                  )
+                else
+                  Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton.icon(
+                          onPressed: _isSubmittingVerification ? null : _submitVerification,
+                          icon: _isSubmittingVerification
+                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black))
+                              : const Icon(Icons.send_rounded),
+                          label: Text(
+                            isRejected ? 'Re-Submit for Admin Approval' : 'Submit for Admin Approval',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryYellow,
+                            foregroundColor: AppTheme.primaryBlack,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: _isSubmittingVerification ? null : _approveShopByAdmin,
+                          icon: const Icon(Icons.verified_user_rounded, color: Colors.greenAccent),
+                          label: const Text(
+                            'Accept & Approve Application (Admin Action) ✓',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.greenAccent),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.greenAccent, width: 1.5),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
               ],
             ),
