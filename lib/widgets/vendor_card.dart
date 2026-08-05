@@ -41,7 +41,11 @@ class VendorCard extends StatelessWidget {
                   // Name
                   Text(
                     vendor.name,
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   // Location
@@ -50,22 +54,24 @@ class VendorCard extends StatelessWidget {
                       const Icon(
                         Icons.location_on_outlined,
                         size: 14,
-                        color: AppTheme.mediumGray,
+                        color: Colors.black54,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         vendor.location,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppTheme.mediumGray,
-                            ),
+                        style: const TextStyle(
+                          color: Colors.black54,
+                          fontSize: 12,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         '• ${vendor.distance}km',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppTheme.primaryYellow,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        style: const TextStyle(
+                          color: Color(0xFFD97706),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -81,16 +87,19 @@ class VendorCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         vendor.rating.toString(),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         '(${vendor.reviewCount} reviews)',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppTheme.mediumGray,
-                            ),
+                        style: const TextStyle(
+                          color: Colors.black54,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -98,9 +107,9 @@ class VendorCard extends StatelessWidget {
               ),
             ),
             // Arrow
-            Icon(
+            const Icon(
               Icons.chevron_right,
-              color: AppTheme.mediumGray,
+              color: Colors.black54,
             ),
           ],
         ),

@@ -537,20 +537,31 @@ class _HomeScreenState extends State<HomeScreen> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(review.userName,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleSmall),
+                                          Text(
+                                            review.userName,
+                                            style: const TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
                                           Row(
                                             children: [
-                                              const Icon(Icons.star,
-                                                  color: AppTheme.primaryYellow,
-                                                  size: 16),
+                                              const Icon(
+                                                Icons.star,
+                                                color: AppTheme.primaryYellow,
+                                                size: 16,
+                                              ),
                                               const SizedBox(width: 4),
-                                              Text(review.rating.toString(),
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodySmall),
+                                              Text(
+                                                review.rating.toString(),
+                                                style: const TextStyle(
+                                                  color: Colors.black87,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ],
@@ -561,7 +572,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const SizedBox(height: 12),
                                 Text(
                                   review.comment,
-                                  style: Theme.of(context).textTheme.bodyMedium,
+                                  style: const TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 13,
+                                    height: 1.4,
+                                  ),
                                 ),
                               ],
                             ),

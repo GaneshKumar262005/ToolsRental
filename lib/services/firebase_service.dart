@@ -304,6 +304,82 @@ class FirebaseService {
     final docId = email.toLowerCase().trim().replaceAll('.', '_');
     return firestore!.collection('active_sessions').doc(docId).snapshots();
   }
+
+  /// Save a new booking to Cloud Firestore collection 'bookings' for Cross-Device Sync (Web <-> Mobile)
+  Future<bool> saveBookingToCloud(Map<String, dynamic> bookingData) async {
+    try {
+      await init();
+      if (firestore != null) {
+        final bookingId = (bookingData['id'] as String? ?? 'BK${DateTime.now().millisecondsSinceEpoch}');
+        try {
+          await firestore!
+              .collection('bookings')
+              .doc(bookingId)
+              .set(bookingData, SetOptions(merge: true))
+              .timeout(const Duration(seconds: 6));
+          print('✅ Saved real-time booking to Cloud Firestore: $bookingId');
+        } on TimeoutException {
+          print('ℹ️ Booking saved locally in Firestore cache: $bookingId');
+        } catch (_) {
+          firestore!.collection('bookings').doc(bookingId).set(bookingData, SetOptions(merge: true)).catchError((_) {});
+        }
+        return true;
+      }
+    } catch (e) {
+      print('⚠️ Firestore save booking notice: $e');
+    }
+    return false;
+  }
+
+  /// Update booking status (e.g. accepted / rejected) in Cloud Firestore for Cross-Device Sync
+  Future<bool> updateBookingStatusInCloud(String bookingId, String newStatus) async {
+    try {
+      await init();
+      if (firestore != null) {
+        try {
+          await firestore!
+              .collection('bookings')
+              .doc(bookingId)
+              .set({'status': newStatus}, SetOptions(merge: true))
+              .timeout(const Duration(seconds: 6));
+          print('✅ Updated booking status in Cloud Firestore: $bookingId -> $newStatus');
+        } catch (e) {
+          firestore!.collection('bookings').doc(bookingId).set({'status': newStatus}, SetOptions(merge: true)).catchError((_) {});
+        }
+        return true;
+      }
+    } catch (e) {
+      print('⚠️ Firestore update booking notice: $e');
+    }
+    return false;
+  }
+
+  /// Fetch all real-time bookings from Cloud Firestore
+  Future<List<Map<String, dynamic>>> fetchBookingsFromCloud() async {
+    List<Map<String, dynamic>> list = [];
+    try {
+      await init();
+      if (firestore != null) {
+        final snapshot = await firestore!
+            .collection('bookings')
+            .get()
+            .timeout(const Duration(seconds: 6));
+        for (var doc in snapshot.docs) {
+          list.add(doc.data());
+        }
+        print('📖 Fetched ${list.length} real-time bookings from Cloud Firestore.');
+      }
+    } catch (e) {
+      print('⚠️ Firestore fetch bookings notice: $e');
+    }
+    return list;
+  }
+
+  /// Stream real-time bookings snapshots for instant cross-device updates (Web <-> Mobile)
+  Stream<QuerySnapshot>? getBookingsStream() {
+    if (firestore == null) return null;
+    return firestore!.collection('bookings').snapshots();
+  }
 }
 
 

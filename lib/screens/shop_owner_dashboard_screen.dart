@@ -1,7 +1,8 @@
-// ignore_for_file: unused_field
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import '../themes/app_theme.dart';
@@ -50,16 +51,41 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
   ];
 
 
+  Timer? _autoSyncTimer;
+  StreamSubscription? _bookingsSubscription;
+
   @override
   void initState() {
     super.initState();
     _fetchBookings();
     _loadVerificationStatus();
     _loadProfileDp();
+    _setupRealtimeBookingSync();
+  }
+
+  void _setupRealtimeBookingSync() {
+    _autoSyncTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (mounted) {
+        _fetchBookings();
+      }
+    });
+
+    try {
+      final stream = FirebaseService().getBookingsStream();
+      if (stream != null) {
+        _bookingsSubscription = stream.listen((snapshot) {
+          if (mounted) {
+            _fetchBookings();
+          }
+        });
+      }
+    } catch (_) {}
   }
 
   @override
   void dispose() {
+    _autoSyncTimer?.cancel();
+    _bookingsSubscription?.cancel();
     _shopNameController.dispose();
     _gstController.dispose();
     _addressController.dispose();
@@ -434,16 +460,35 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
     List<dynamic> allBookings = [];
     final prefs = await SharedPreferences.getInstance();
 
-    // 1. Load real customer bookings placed from Payment Screen
+    // 1. Primary: Fetch real-time Cloud Firestore bookings (Cross-Device Web <-> Mobile Sync)
+    try {
+      final cloudList = await FirebaseService().fetchBookingsFromCloud();
+      for (var cb in cloudList) {
+        if (!allBookings.any((b) => b['id'].toString() == cb['id'].toString())) {
+          allBookings.add(cb);
+        }
+      }
+    } catch (_) {}
+
+    // 2. Load real customer bookings placed from Payment Screen / Local SharedPreferences
     final List<String> rawRealBookings = prefs.getStringList('customer_real_bookings') ?? [];
     for (var jsonStr in rawRealBookings) {
       try {
         final parsed = jsonDecode(jsonStr);
-        allBookings.add(parsed);
+        final String pId = parsed['id'].toString();
+        final int existingIndex = allBookings.indexWhere((b) => b['id'].toString() == pId);
+        if (existingIndex == -1) {
+          allBookings.add(parsed);
+        } else {
+          // If cloud has updated status, prefer the latest
+          if (parsed['status'] != null && allBookings[existingIndex]['status'] == 'pending') {
+            allBookings[existingIndex]['status'] = parsed['status'];
+          }
+        }
       } catch (_) {}
     }
 
-    // 2. Load API or Dummy bookings
+    // 3. Load API or Dummy bookings fallback
     try {
       final response = await http.get(
         Uri.parse(ApiConfig.adminBookingsUrl),
@@ -452,7 +497,11 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true && data['bookings'] != null) {
-          allBookings.addAll(data['bookings']);
+          for (var ab in (data['bookings'] as List)) {
+            if (!allBookings.any((b) => b['id'].toString() == ab['id'].toString())) {
+              allBookings.add(ab);
+            }
+          }
         }
       }
     } catch (_) {}
@@ -478,7 +527,7 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
       }).toList();
     }
 
-    // 3. Recalculate Live Revenue from Accepted Customer Orders
+    // 4. Recalculate Live Revenue from Accepted Customer Orders
     double liveTotal = 48500.0;
     for (var b in allBookings) {
       if (b['status'] == 'accepted' || b['status'] == 'approved') {
@@ -506,6 +555,9 @@ class _ShopOwnerDashboardScreenState extends State<ShopOwnerDashboardScreen> {
         }
       }
     });
+
+    // Instantly sync updated status to Cloud Firestore for Cross-Device Web <-> Mobile Sync!
+    FirebaseService().updateBookingStatusInCloud(bookingId.toString(), status);
 
     final isAccepted = status == 'accepted';
     String toolName = 'Equipment';

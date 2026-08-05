@@ -29,7 +29,17 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
   Future<void> _fetchBookings() async {
     List<dynamic> combinedBookings = [];
 
-    // 1. Read real customer bookings from SharedPreferences
+    // 1. Read real-time Cloud Firestore bookings for cross-device updates
+    try {
+      final cloudList = await FirebaseService().fetchBookingsFromCloud();
+      for (var cb in cloudList) {
+        if (!combinedBookings.any((b) => b['id'].toString() == cb['id'].toString())) {
+          combinedBookings.add(cb);
+        }
+      }
+    } catch (_) {}
+
+    // 2. Read real customer bookings from SharedPreferences
     try {
       final prefs = await SharedPreferences.getInstance();
       
@@ -39,24 +49,18 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
           try {
             final decoded = jsonDecode(str);
             if (decoded is Map<String, dynamic>) {
-              combinedBookings.add(decoded);
+              final String dId = decoded['id'].toString();
+              final existingIdx = combinedBookings.indexWhere((b) => b['id'].toString() == dId);
+              if (existingIdx == -1) {
+                combinedBookings.add(decoded);
+              } else {
+                if (decoded['status'] != null && combinedBookings[existingIdx]['status'] == 'pending') {
+                  combinedBookings[existingIdx]['status'] = decoded['status'];
+                }
+              }
             }
           } catch (_) {}
         }
-      }
-
-      final String? jsonStr = prefs.getString('customer_real_bookings');
-      if (jsonStr != null && jsonStr.isNotEmpty) {
-        try {
-          final decoded = jsonDecode(jsonStr);
-          if (decoded is List) {
-            for (var item in decoded) {
-              if (!combinedBookings.any((cb) => cb['id'] == item['id'])) {
-                combinedBookings.add(item);
-              }
-            }
-          }
-        } catch (_) {}
       }
     } catch (_) {}
 

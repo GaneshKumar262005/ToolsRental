@@ -6,6 +6,7 @@ import '../models/tool_model.dart';
 import '../themes/app_theme.dart';
 import '../widgets/gradient_button.dart';
 import '../dummy_data/dummy_data.dart';
+import '../services/firebase_service.dart';
 
 
 
@@ -197,9 +198,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     final double updatedRevenue = currentRevenue + _totalPrice;
                     await prefs.setDouble('shop_owner_total_earnings', updatedRevenue);
 
-                    // Record real customer booking into SharedPreferences
+                    // Record real customer booking into SharedPreferences & Cloud Firestore
                     final List<String> customerBookings = prefs.getStringList('customer_real_bookings') ?? [];
-                    final newBookingJson = jsonEncode({
+                    final Map<String, dynamic> newBookingMap = {
                       'id': 'BK${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
                       'status': 'pending',
                       'startDate': DateTime.now().toIso8601String(),
@@ -210,6 +211,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       'userPhone': DummyData.currentUser.phone,
                       'userAddress': DummyData.currentUser.location,
                       'paymentMethod': 'cash',
+                      'createdAt': DateTime.now().toIso8601String(),
                       'tool': {
                         'id': tool.id,
                         'name': tool.name,
@@ -217,9 +219,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         'pricePerDay': tool.pricePerDay,
                         'imageUrl': tool.imageUrl,
                       }
-                    });
+                    };
+
+                    final newBookingJson = jsonEncode(newBookingMap);
                     customerBookings.insert(0, newBookingJson);
                     await prefs.setStringList('customer_real_bookings', customerBookings);
+
+                    // Sync instantly to Cloud Firestore for Cross-Device Web <-> Mobile Sync
+                    FirebaseService().saveBookingToCloud(newBookingMap);
 
                     // Record transaction details
                     final List<String> recentTxns = prefs.getStringList('shop_owner_recent_txns') ?? [];
