@@ -29,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
   bool _showSearchResults = false;
+  String _popularFilter = '🔥 Most Liked';
 
   List<ToolModel> get _filteredTools {
     if (_searchQuery.isEmpty) return DummyData.tools;
@@ -36,6 +37,25 @@ class _HomeScreenState extends State<HomeScreen> {
       return tool.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           tool.category.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
+  }
+
+  List<ToolModel> get _popularTools {
+    final list = List<ToolModel>.from(DummyData.tools);
+    if (_popularFilter == '⭐ Top Rated') {
+      return list.where((t) => t.rating >= 4.8).toList()
+        ..sort((a, b) => b.rating.compareTo(a.rating));
+    } else if (_popularFilter == '👍 Suggested') {
+      return list.where((t) => t.reviewCount >= 80).toList()
+        ..sort((a, b) => b.reviewCount.compareTo(a.reviewCount));
+    } else if (_popularFilter == '🔥 Most Liked') {
+      list.sort((a, b) {
+        final scoreA = (a.rating * 100) + a.reviewCount;
+        final scoreB = (b.rating * 100) + b.reviewCount;
+        return scoreB.compareTo(scoreA);
+      });
+      return list;
+    }
+    return list;
   }
 
   @override
@@ -418,7 +438,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Popular Tools
+                    // Popular Tools (Most Liked & Suggested)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -435,13 +455,49 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
+
+                    // Filter ChoiceChips for Most Liked / Suggested Tools
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          '🔥 Most Liked',
+                          '⭐ Top Rated',
+                          '👍 Suggested',
+                          'All Tools',
+                        ].map((chip) {
+                          final bool selected = _popularFilter == chip;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ChoiceChip(
+                              label: Text(
+                                chip,
+                                style: TextStyle(
+                                  color: selected ? Colors.black : Colors.white70,
+                                  fontSize: 11,
+                                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                                ),
+                              ),
+                              selected: selected,
+                              selectedColor: AppTheme.primaryYellow,
+                              backgroundColor: const Color(0xFF2A2A2A),
+                              onSelected: (_) {
+                                setState(() => _popularFilter = chip);
+                              },
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
 
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final width = constraints.maxWidth;
                         final crossAxisCount = width >= 1200 ? 4 : (width >= 750 ? 3 : 2);
                         final childAspectRatio = width >= 1200 ? 0.90 : (width >= 750 ? 0.85 : 0.58);
+                        final displayList = _popularTools;
                         return GridView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
@@ -451,9 +507,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisSpacing: 14,
                             mainAxisSpacing: 14,
                           ),
-                          itemCount: DummyData.tools.length,
+                          itemCount: displayList.length,
                           itemBuilder: (context, index) {
-                            final tool = DummyData.tools[index];
+                            final tool = displayList[index];
                             return _buildToolCard(tool);
                           },
                         );
@@ -650,28 +706,75 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Medium Image Container (Splash/Product style)
-            Container(
-              height: imageHeight,
-              width: double.infinity,
-              margin: EdgeInsets.all(isMobile ? 5 : 8),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F7),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.05)),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: AppImage(
-                    imageUrl: tool.imageUrl,
-                    width: double.infinity,
-                    height: double.infinity,
-                    fit: BoxFit.contain,
+            // Medium Image Container (Splash/Product style) with Most Liked Badge
+            Stack(
+              children: [
+                Container(
+                  height: imageHeight,
+                  width: double.infinity,
+                  margin: EdgeInsets.all(isMobile ? 5 : 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F7),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withOpacity(0.05)),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: AppImage(
+                        imageUrl: tool.imageUrl,
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                if (tool.rating >= 4.8 || tool.reviewCount >= 100)
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF4500), Color(0xFFFF8C00)],
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.local_fire_department, color: Colors.white, size: 10),
+                          SizedBox(width: 2),
+                          Text(
+                            'MOST LIKED',
+                            style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (tool.rating >= 4.6)
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade800,
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                      ),
+                      child: const Text(
+                        '👍 SUGGESTED',
+                        style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             // Text Details & Website-style Layout
             Expanded(
