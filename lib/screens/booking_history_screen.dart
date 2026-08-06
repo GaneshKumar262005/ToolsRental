@@ -234,7 +234,6 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
               }
 
               // 4. Update local booking storage
-              final prefs = await SharedPreferences.getInstance();
               final List<String> listStrings = prefs.getStringList('customer_real_bookings') ?? [];
               List<String> updatedList = [];
 
