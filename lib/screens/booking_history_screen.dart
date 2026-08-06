@@ -213,11 +213,11 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                 final bool idMatches = toolId.isNotEmpty && t.id.toLowerCase() == toolId.toLowerCase();
                 final bool nameMatches = toolName.isNotEmpty && t.name.toLowerCase().trim() == toolName.toLowerCase().trim();
                 if (idMatches || nameMatches) {
-                  double newAvg = ((t.rating * t.reviewCount) + userRating) / (t.reviewCount + 1);
-                  t.rating = double.parse(newAvg.toStringAsFixed(1));
+                  t.rating = userRating;
                   t.reviewCount += 1;
                   t.hasRealFeedback = true;
                   t.lastFeedbackRating = userRating;
+                  t.lastFeedbackComment = reviewText.isEmpty ? 'Returned & rated by customer.' : reviewText;
                   t.lastFeedbackTime = DateTime.now();
                 }
               }

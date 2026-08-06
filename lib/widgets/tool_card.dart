@@ -94,32 +94,6 @@ class ToolCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                  )
-                else if (tool.rating >= 4.8 || tool.reviewCount >= 100)
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFFF4500), Color(0xFFFF8C00)],
-                        ),
-                        borderRadius: BorderRadius.circular(6),
-                        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.local_fire_department, color: Colors.white, size: 10),
-                          SizedBox(width: 2),
-                          Text(
-                            'MOST LIKED',
-                            style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
               ],
             ),
@@ -177,16 +151,24 @@ class ToolCard extends StatelessWidget {
                         ),
                         const Spacer(),
                         const Icon(Icons.location_on_outlined, color: AppTheme.mediumGray, size: 10),
-                        Flexible(
-                          child: Text(
-                            tool.location,
-                            style: const TextStyle(color: AppTheme.mediumGray, fontSize: 9),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                        Text(
+                          ' ${tool.location}',
+                          style: const TextStyle(color: AppTheme.mediumGray, fontSize: 9),
                         ),
                       ],
                     ),
+                    if (tool.hasRealFeedback && tool.lastFeedbackComment != null && tool.lastFeedbackComment!.isNotEmpty)
+                      Text(
+                        '💬 "${tool.lastFeedbackComment}"',
+                        style: const TextStyle(
+                          color: AppTheme.primaryYellow,
+                          fontSize: 9,
+                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

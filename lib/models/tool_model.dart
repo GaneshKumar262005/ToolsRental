@@ -14,6 +14,7 @@ class ToolModel {
   final String location;
   bool hasRealFeedback;
   double? lastFeedbackRating;
+  String? lastFeedbackComment;
   DateTime? lastFeedbackTime;
 
   ToolModel({
@@ -32,6 +33,7 @@ class ToolModel {
     required this.location,
     this.hasRealFeedback = false,
     this.lastFeedbackRating,
+    this.lastFeedbackComment,
     this.lastFeedbackTime,
   });
 }
