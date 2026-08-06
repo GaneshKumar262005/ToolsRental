@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../dummy_data/dummy_data.dart';
 import '../themes/app_theme.dart';
 import '../models/tool_model.dart';
+import '../services/firebase_service.dart';
 import '../widgets/category_card_widget.dart';
 import '../widgets/vendor_card.dart';
 import '../widgets/search_bar_widget.dart';
