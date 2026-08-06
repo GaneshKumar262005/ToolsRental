@@ -94,23 +94,6 @@ class ToolCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                  )
-                else if (tool.rating >= 4.6)
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade800,
-                        borderRadius: BorderRadius.circular(6),
-                        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
-                      ),
-                      child: const Text(
-                        '👍 SUGGESTED',
-                        style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                      ),
-                    ),
                   ),
               ],
             ),

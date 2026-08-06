@@ -4,8 +4,8 @@ class ToolModel {
   final String category;
   final String description;
   final double pricePerDay;
-  final double rating;
-  final int reviewCount;
+  double rating;
+  int reviewCount;
   final String imageUrl;
   final List<String> imageUrls;
   final bool isAvailable;

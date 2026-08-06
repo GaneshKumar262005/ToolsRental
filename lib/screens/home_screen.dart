@@ -44,9 +44,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_popularFilter == '⭐ Top Rated') {
       return list.where((t) => t.rating >= 4.8).toList()
         ..sort((a, b) => b.rating.compareTo(a.rating));
-    } else if (_popularFilter == '👍 Suggested') {
-      return list.where((t) => t.reviewCount >= 80).toList()
-        ..sort((a, b) => b.reviewCount.compareTo(a.reviewCount));
     } else if (_popularFilter == '🔥 Most Liked') {
       list.sort((a, b) {
         final scoreA = (a.rating * 100) + a.reviewCount;
@@ -56,6 +53,50 @@ class _HomeScreenState extends State<HomeScreen> {
       return list;
     }
     return list;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRealCustomerRatings();
+  }
+
+  Future<void> _loadRealCustomerRatings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cloudReviews = await FirebaseService().fetchToolRatings();
+      final List<String> localReviewsRaw = prefs.getStringList('local_customer_reviews') ?? [];
+      
+      List<Map<String, dynamic>> allReviews = [...cloudReviews];
+      for (var raw in localReviewsRaw) {
+        try {
+          final decoded = jsonDecode(raw);
+          if (decoded is Map<String, dynamic>) {
+            allReviews.add(decoded);
+          }
+        } catch (_) {}
+      }
+
+      Map<String, List<double>> toolRatingsMap = {};
+      for (var rev in allReviews) {
+        final tId = rev['toolId']?.toString();
+        final r = (rev['rating'] as num?)?.toDouble();
+        if (tId != null && r != null && r > 0) {
+          toolRatingsMap.putIfAbsent(tId, () => []).add(r);
+        }
+      }
+
+      for (var tool in DummyData.tools) {
+        if (toolRatingsMap.containsKey(tool.id)) {
+          final ratings = toolRatingsMap[tool.id]!;
+          double sum = ratings.reduce((a, b) => a + b);
+          double newAvg = ((tool.rating * tool.reviewCount) + sum) / (tool.reviewCount + ratings.length);
+          tool.rating = double.parse(newAvg.toStringAsFixed(1));
+          tool.reviewCount += ratings.length;
+        }
+      }
+      if (mounted) setState(() {});
+    } catch (_) {}
   }
 
   @override
@@ -464,7 +505,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           '🔥 Most Liked',
                           '⭐ Top Rated',
-                          '👍 Suggested',
                           'All Tools',
                         ].map((chip) {
                           final bool selected = _popularFilter == chip;
@@ -754,23 +794,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
                           ),
                         ],
-                      ),
-                    ),
-                  )
-                else if (tool.rating >= 4.6)
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade800,
-                        borderRadius: BorderRadius.circular(6),
-                        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
-                      ),
-                      child: const Text(
-                        '👍 SUGGESTED',
-                        style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),

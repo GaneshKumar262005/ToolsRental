@@ -380,6 +380,59 @@ class FirebaseService {
     if (firestore == null) return null;
     return firestore!.collection('bookings').snapshots();
   }
+
+  /// Save real customer feedback & rating on tool return to Cloud Firestore
+  Future<bool> saveToolRatingAndReview({
+    required String toolId,
+    required double rating,
+    required String comment,
+    required String userName,
+  }) async {
+    try {
+      await init();
+      if (firestore != null) {
+        final reviewId = 'rev_${DateTime.now().millisecondsSinceEpoch}';
+        final reviewData = {
+          'id': reviewId,
+          'toolId': toolId,
+          'rating': rating,
+          'comment': comment,
+          'userName': userName,
+          'createdAt': DateTime.now().toIso8601String(),
+        };
+        await firestore!
+            .collection('tool_reviews')
+            .doc(reviewId)
+            .set(reviewData, SetOptions(merge: true))
+            .timeout(const Duration(seconds: 5));
+        print('⭐ Saved real customer feedback & rating to Cloud Firestore for tool: $toolId');
+        return true;
+      }
+    } catch (e) {
+      print('⚠️ Firestore rating save notice: $e');
+    }
+    return false;
+  }
+
+  /// Fetch all real customer tool ratings from Cloud Firestore
+  Future<List<Map<String, dynamic>>> fetchToolRatings() async {
+    List<Map<String, dynamic>> list = [];
+    try {
+      await init();
+      if (firestore != null) {
+        final snapshot = await firestore!
+            .collection('tool_reviews')
+            .get()
+            .timeout(const Duration(seconds: 5));
+        for (var doc in snapshot.docs) {
+          list.add(doc.data());
+        }
+      }
+    } catch (e) {
+      print('⚠️ Firestore fetch ratings notice: $e');
+    }
+    return list;
+  }
 }
 
 

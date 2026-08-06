@@ -122,6 +122,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
     XFile? pickedFile;
     String? base64Image;
     final notesController = TextEditingController();
+    double userRating = 5.0;
     bool isSubmitting = false;
 
     await showModalBottomSheet(
@@ -170,16 +171,53 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                 'toolName': tool['name'] ?? 'Equipment Item',
                 'userName': booking['userName'] ?? 'Customer',
                 'userPhone': booking['userPhone'] ?? '',
+                'userRating': userRating,
                 'returnNotes': notesController.text.trim(),
                 'returnPhotoBase64': base64Image ?? '',
                 'returnedAt': DateTime.now().toIso8601String(),
                 'status': 'RETURNED',
               };
 
-              // 1. Save to Firebase Firestore
+              // 1. Save tool return to Cloud Firestore
               await FirebaseService().saveToolReturn(returnData);
 
-              // 2. Try sending to backend server API
+              // 2. Save real customer tool rating & feedback review
+              final String toolId = (tool['id'] ?? '').toString();
+              final String customerName = booking['userName'] ?? 'Customer';
+              final String reviewText = notesController.text.trim();
+
+              if (toolId.isNotEmpty) {
+                await FirebaseService().saveToolRatingAndReview(
+                  toolId: toolId,
+                  rating: userRating,
+                  comment: reviewText.isEmpty ? 'Tool returned in excellent condition.' : reviewText,
+                  userName: customerName,
+                );
+
+                // Save locally to SharedPreferences
+                final prefs = await SharedPreferences.getInstance();
+                final localRev = jsonEncode({
+                  'toolId': toolId,
+                  'rating': userRating,
+                  'comment': reviewText,
+                  'userName': customerName,
+                  'createdAt': DateTime.now().toIso8601String(),
+                });
+                final List<String> localRevs = prefs.getStringList('local_customer_reviews') ?? [];
+                localRevs.insert(0, localRev);
+                await prefs.setStringList('local_customer_reviews', localRevs);
+
+                // Update DummyData.tools in memory immediately
+                for (var t in DummyData.tools) {
+                  if (t.id == toolId) {
+                    double newAvg = ((t.rating * t.reviewCount) + userRating) / (t.reviewCount + 1);
+                    t.rating = double.parse(newAvg.toStringAsFixed(1));
+                    t.reviewCount += 1;
+                  }
+                }
+              }
+
+              // 3. Try sending to backend server API
               try {
                 await http.post(
                   Uri.parse('${ApiConfig.baseUrl}/api/return-tool'),
@@ -190,7 +228,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                 print('ℹ️ Backend return API notice: $e');
               }
 
-              // 3. Update local booking storage
+              // 4. Update local booking storage
               final prefs = await SharedPreferences.getInstance();
               final List<String> listStrings = prefs.getStringList('customer_real_bookings') ?? [];
               List<String> updatedList = [];
@@ -203,6 +241,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                     item['returnNotes'] = notesController.text.trim();
                     item['returnPhotoBase64'] = base64Image;
                     item['returnedAt'] = DateTime.now().toIso8601String();
+                    item['userRating'] = userRating;
                     updatedList.add(jsonEncode(item));
                   } else {
                     updatedList.add(str);
@@ -213,12 +252,12 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
               }
               await prefs.setStringList('customer_real_bookings', updatedList);
 
-              // 4. Save Shop Owner notification
+              // 5. Save Shop Owner notification
               final List<String> shopNotifs = prefs.getStringList('shop_owner_notifications') ?? [];
               final notifItem = jsonEncode({
                 'id': 'notif_${DateTime.now().millisecondsSinceEpoch}',
-                'title': 'Tool Return Submitted 📦',
-                'message': 'Customer ${booking['userName'] ?? 'User'} returned ${tool['name'] ?? 'Tool'} for Order #$orderId.',
+                'title': 'Tool Returned with ${userRating}★ Rating! 📦',
+                'message': 'Customer ${booking['userName'] ?? 'User'} returned ${tool['name'] ?? 'Tool'} (Rated ${userRating}★).',
                 'orderId': orderId,
                 'toolName': tool['name'],
                 'returnNotes': notesController.text.trim(),
@@ -229,7 +268,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
               shopNotifs.insert(0, notifItem);
               await prefs.setStringList('shop_owner_notifications', shopNotifs);
 
-              // 5. Update local state in screen
+              // 6. Update local state in screen
               if (mounted) {
                 setState(() {
                   for (var b in _bookings) {
@@ -238,6 +277,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                       b['returnNotes'] = notesController.text.trim();
                       b['returnPhotoBase64'] = base64Image;
                       b['returnedAt'] = DateTime.now().toIso8601String();
+                      b['userRating'] = userRating;
                     }
                   }
                 });
@@ -247,7 +287,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('✅ Tool return for Order #$orderId submitted successfully!'),
+                    content: Text('⭐ Thank you! Real feedback recorded & tool rating updated in Popular Tools!'),
                     backgroundColor: Colors.green,
                   ),
                 );
@@ -270,7 +310,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'Return Tool Verification',
+                          'Return Tool & Give Feedback',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 18,
@@ -293,7 +333,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.confirmation_number_outlined, color: AppTheme.primaryYellow, size: 20),
+                          const Icon(Icons.confirmation_number_outlined, color: AppTheme.primaryYellow, size: 20),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -309,6 +349,56 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    // Interactive Customer Star Rating Section
+                    const Text(
+                      'Rate Tool Performance (Real Customer Rating)',
+                      style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2A2A2A),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: List.generate(5, (index) {
+                              final starVal = index + 1.0;
+                              final isFilled = starVal <= userRating;
+                              return IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                icon: Icon(
+                                  isFilled ? Icons.star : Icons.star_border,
+                                  color: AppTheme.primaryYellow,
+                                  size: 30,
+                                ),
+                                onPressed: () {
+                                  setModalState(() {
+                                    userRating = starVal;
+                                  });
+                                },
+                              );
+                            }),
+                          ),
+                          Text(
+                            '${userRating.toStringAsFixed(1)} ★',
+                            style: const TextStyle(
+                              color: AppTheme.primaryYellow,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
                     const Text(
                       'Capture Return Photo',
                       style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
@@ -317,7 +407,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                     GestureDetector(
                       onTap: () => pickPhoto(ImageSource.camera),
                       child: Container(
-                        height: 160,
+                        height: 140,
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: const Color(0xFF2A2A2A),
@@ -334,11 +424,10 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                                 ),
                               )
                             : Column(
-
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.camera_alt_outlined, color: AppTheme.primaryYellow, size: 40),
-                                  const SizedBox(height: 8),
+                                  const Icon(Icons.camera_alt_outlined, color: AppTheme.primaryYellow, size: 36),
+                                  const SizedBox(height: 6),
                                   const Text(
                                     'Tap to capture tool return photo',
                                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
@@ -352,7 +441,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                               ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -371,7 +460,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                     ),
                     const SizedBox(height: 14),
                     const Text(
-                      'Return Condition & Notes',
+                      'Real Customer Feedback & Return Notes',
                       style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 8),
@@ -380,7 +469,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                       style: const TextStyle(color: Colors.white),
                       maxLines: 2,
                       decoration: InputDecoration(
-                        hintText: 'e.g. Good condition, cleaned, all accessories intact...',
+                        hintText: 'e.g. Excellent tool performance, worked smoothly...',
                         hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
                         filled: true,
                         fillColor: const Color(0xFF2A2A2A),
@@ -409,7 +498,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                                 child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2.5),
                               )
                             : const Text(
-                                'Submit Return & Notify Owner 📦',
+                                'Submit Return & Real Feedback ⭐',
                                 style: TextStyle(
                                   color: Colors.black,
                                   fontWeight: FontWeight.bold,
