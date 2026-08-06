@@ -45,7 +45,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<ToolModel> get _popularTools {
-    final list = DummyData.tools.where((t) => t.hasRealFeedback).toList();
+    final list = DummyData.tools.where((t) {
+      if (!t.hasRealFeedback) return false;
+      final double r = t.lastFeedbackRating ?? t.rating;
+      return r >= 3.8;
+    }).toList();
+
     if (_popularFilter == '⭐ Top Rated') {
       list.sort((a, b) => b.rating.compareTo(a.rating));
     } else {
@@ -62,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadRealCustomerRatings();
-    _ratingsTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+    _ratingsTimer = Timer.periodic(const Duration(seconds: 3), (_) {
       if (mounted) {
         _loadRealCustomerRatings();
       }
@@ -87,22 +92,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
       bool updatedAny = false;
       for (var rev in allReviews) {
-        final rId = (rev['toolId'] ?? '').toString().toLowerCase();
+        final rId = (rev['toolId'] ?? '').toString().toLowerCase().trim();
         final rName = (rev['toolName'] ?? '').toString().toLowerCase().trim();
         final r = (rev['rating'] as num?)?.toDouble();
 
         if (r != null && r > 0) {
           for (var tool in DummyData.tools) {
-            final tId = tool.id.toLowerCase();
+            final tId = tool.id.toLowerCase().trim();
             final tName = tool.name.toLowerCase().trim();
 
-            if ((rId.isNotEmpty && rId == tId) || (rName.isNotEmpty && rName == tName)) {
+            bool matches = false;
+            if (rId.isNotEmpty && rId == tId) {
+              matches = true;
+            } else if (rName.isNotEmpty && (tName.contains(rName) || rName.contains(tName))) {
+              matches = true;
+            }
+
+            if (matches) {
               tool.rating = r;
               tool.hasRealFeedback = true;
               tool.lastFeedbackRating = r;
               final commentStr = (rev['comment'] ?? '').toString();
               tool.lastFeedbackComment = commentStr.isEmpty ? 'Returned & rated by customer.' : commentStr;
-              tool.lastFeedbackTime = DateTime.now();
+              if (rev['createdAt'] != null) {
+                try {
+                  tool.lastFeedbackTime = DateTime.parse(rev['createdAt']);
+                } catch (_) {
+                  tool.lastFeedbackTime = DateTime.now();
+                }
+              } else {
+                tool.lastFeedbackTime = DateTime.now();
+              }
               updatedAny = true;
             }
           }

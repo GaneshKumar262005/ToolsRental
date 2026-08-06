@@ -210,8 +210,13 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
 
               // Update DummyData.tools in memory immediately! Match by ID OR Name
               for (var t in DummyData.tools) {
-                final bool idMatches = toolId.isNotEmpty && t.id.toLowerCase() == toolId.toLowerCase();
-                final bool nameMatches = toolName.isNotEmpty && t.name.toLowerCase().trim() == toolName.toLowerCase().trim();
+                final String tId = t.id.toLowerCase().trim();
+                final String tName = t.name.toLowerCase().trim();
+                final String searchId = toolId.toLowerCase().trim();
+                final String searchName = toolName.toLowerCase().trim();
+
+                final bool idMatches = searchId.isNotEmpty && tId == searchId;
+                final bool nameMatches = searchName.isNotEmpty && (tName.contains(searchName) || searchName.contains(tName));
                 if (idMatches || nameMatches) {
                   t.rating = userRating;
                   t.reviewCount += 1;
