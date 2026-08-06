@@ -423,14 +423,12 @@ class FirebaseService {
         final snapshot = await firestore!
             .collection('tool_reviews')
             .get()
-            .timeout(const Duration(seconds: 5));
+            .timeout(const Duration(seconds: 2));
         for (var doc in snapshot.docs) {
           list.add(doc.data());
         }
       }
-    } catch (e) {
-      print('⚠️ Firestore fetch ratings notice: $e');
-    }
+    } catch (_) {}
     return list;
   }
 }

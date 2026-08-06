@@ -45,14 +45,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<ToolModel> get _popularTools {
-    final list = List<ToolModel>.from(DummyData.tools);
+    final list = DummyData.tools.where((t) => t.hasRealFeedback).toList();
     if (_popularFilter == '⭐ Top Rated') {
       list.sort((a, b) => b.rating.compareTo(a.rating));
-    } else if (_popularFilter == '🔥 Most Liked') {
+    } else {
       list.sort((a, b) {
-        final double scoreA = (a.hasRealFeedback ? 2000.0 : 0.0) + (a.rating * 100) + a.reviewCount;
-        final double scoreB = (b.hasRealFeedback ? 2000.0 : 0.0) + (b.rating * 100) + b.reviewCount;
-        return scoreB.compareTo(scoreA);
+        final bTime = b.lastFeedbackTime ?? DateTime(2000);
+        final aTime = a.lastFeedbackTime ?? DateTime(2000);
+        return bTime.compareTo(aTime);
       });
     }
     return list;
@@ -62,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadRealCustomerRatings();
-    _ratingsTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+    _ratingsTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (mounted) {
         _loadRealCustomerRatings();
       }
@@ -519,9 +519,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          '🔥 Most Liked',
+                          '💬 Customer Feedback',
                           '⭐ Top Rated',
-                          'All Tools',
                         ].map((chip) {
                           final bool selected = _popularFilter == chip;
                           return Padding(
@@ -554,6 +553,35 @@ class _HomeScreenState extends State<HomeScreen> {
                         final crossAxisCount = width >= 1200 ? 4 : (width >= 750 ? 3 : 2);
                         final childAspectRatio = width >= 1200 ? 0.90 : (width >= 750 ? 0.85 : 0.58);
                         final displayList = _popularTools;
+
+                        if (displayList.isEmpty) {
+                          return Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E1E1E),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppTheme.primaryYellow.withOpacity(0.2)),
+                            ),
+                            child: Column(
+                              children: const [
+                                Icon(Icons.rate_review_outlined, color: AppTheme.primaryYellow, size: 36),
+                                SizedBox(height: 8),
+                                Text(
+                                  'No Customer Feedback Tools Yet',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Return a rented tool from Booking History to rate & feature it here!',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: Colors.white54, fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
                         return GridView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
