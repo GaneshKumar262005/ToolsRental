@@ -183,37 +183,42 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
 
               // 2. Save real customer tool rating & feedback review
               final String toolId = (tool['id'] ?? '').toString();
+              final String toolName = (tool['name'] ?? '').toString();
               final String customerName = booking['userName'] ?? 'Customer';
               final String reviewText = notesController.text.trim();
 
-              if (toolId.isNotEmpty) {
-                await FirebaseService().saveToolRatingAndReview(
-                  toolId: toolId,
-                  rating: userRating,
-                  comment: reviewText.isEmpty ? 'Tool returned in excellent condition.' : reviewText,
-                  userName: customerName,
-                );
+              await FirebaseService().saveToolRatingAndReview(
+                toolId: toolId.isNotEmpty ? toolId : toolName,
+                rating: userRating,
+                comment: reviewText.isEmpty ? 'Tool returned in excellent condition.' : reviewText,
+                userName: customerName,
+              );
 
-                // Save locally to SharedPreferences
-                final prefs = await SharedPreferences.getInstance();
-                final localRev = jsonEncode({
-                  'toolId': toolId,
-                  'rating': userRating,
-                  'comment': reviewText,
-                  'userName': customerName,
-                  'createdAt': DateTime.now().toIso8601String(),
-                });
-                final List<String> localRevs = prefs.getStringList('local_customer_reviews') ?? [];
-                localRevs.insert(0, localRev);
-                await prefs.setStringList('local_customer_reviews', localRevs);
+              // Save locally to SharedPreferences
+              final prefs = await SharedPreferences.getInstance();
+              final localRev = jsonEncode({
+                'toolId': toolId,
+                'toolName': toolName,
+                'rating': userRating,
+                'comment': reviewText,
+                'userName': customerName,
+                'createdAt': DateTime.now().toIso8601String(),
+              });
+              final List<String> localRevs = prefs.getStringList('local_customer_reviews') ?? [];
+              localRevs.insert(0, localRev);
+              await prefs.setStringList('local_customer_reviews', localRevs);
 
-                // Update DummyData.tools in memory immediately
-                for (var t in DummyData.tools) {
-                  if (t.id == toolId) {
-                    double newAvg = ((t.rating * t.reviewCount) + userRating) / (t.reviewCount + 1);
-                    t.rating = double.parse(newAvg.toStringAsFixed(1));
-                    t.reviewCount += 1;
-                  }
+              // Update DummyData.tools in memory immediately! Match by ID OR Name
+              for (var t in DummyData.tools) {
+                final bool idMatches = toolId.isNotEmpty && t.id.toLowerCase() == toolId.toLowerCase();
+                final bool nameMatches = toolName.isNotEmpty && t.name.toLowerCase().trim() == toolName.toLowerCase().trim();
+                if (idMatches || nameMatches) {
+                  double newAvg = ((t.rating * t.reviewCount) + userRating) / (t.reviewCount + 1);
+                  t.rating = double.parse(newAvg.toStringAsFixed(1));
+                  t.reviewCount += 1;
+                  t.hasRealFeedback = true;
+                  t.lastFeedbackRating = userRating;
+                  t.lastFeedbackTime = DateTime.now();
                 }
               }
 

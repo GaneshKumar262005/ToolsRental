@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -33,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _searchQuery = '';
   bool _showSearchResults = false;
   String _popularFilter = '🔥 Most Liked';
+  Timer? _ratingsTimer;
 
   List<ToolModel> get _filteredTools {
     if (_searchQuery.isEmpty) return DummyData.tools;
@@ -45,15 +47,13 @@ class _HomeScreenState extends State<HomeScreen> {
   List<ToolModel> get _popularTools {
     final list = List<ToolModel>.from(DummyData.tools);
     if (_popularFilter == '⭐ Top Rated') {
-      return list.where((t) => t.rating >= 4.8).toList()
-        ..sort((a, b) => b.rating.compareTo(a.rating));
+      list.sort((a, b) => b.rating.compareTo(a.rating));
     } else if (_popularFilter == '🔥 Most Liked') {
       list.sort((a, b) {
-        final scoreA = (a.rating * 100) + a.reviewCount;
-        final scoreB = (b.rating * 100) + b.reviewCount;
+        final double scoreA = (a.hasRealFeedback ? 2000.0 : 0.0) + (a.rating * 100) + a.reviewCount;
+        final double scoreB = (b.hasRealFeedback ? 2000.0 : 0.0) + (b.rating * 100) + b.reviewCount;
         return scoreB.compareTo(scoreA);
       });
-      return list;
     }
     return list;
   }
@@ -62,6 +62,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadRealCustomerRatings();
+    _ratingsTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (mounted) {
+        _loadRealCustomerRatings();
+      }
+    });
   }
 
   Future<void> _loadRealCustomerRatings() async {
@@ -80,30 +85,40 @@ class _HomeScreenState extends State<HomeScreen> {
         } catch (_) {}
       }
 
-      Map<String, List<double>> toolRatingsMap = {};
+      bool updatedAny = false;
       for (var rev in allReviews) {
-        final tId = rev['toolId']?.toString();
+        final rId = (rev['toolId'] ?? '').toString().toLowerCase();
+        final rName = (rev['toolName'] ?? '').toString().toLowerCase().trim();
         final r = (rev['rating'] as num?)?.toDouble();
-        if (tId != null && r != null && r > 0) {
-          toolRatingsMap.putIfAbsent(tId, () => []).add(r);
-        }
-      }
 
-      for (var tool in DummyData.tools) {
-        if (toolRatingsMap.containsKey(tool.id)) {
-          final ratings = toolRatingsMap[tool.id]!;
-          double sum = ratings.reduce((a, b) => a + b);
-          double newAvg = ((tool.rating * tool.reviewCount) + sum) / (tool.reviewCount + ratings.length);
-          tool.rating = double.parse(newAvg.toStringAsFixed(1));
-          tool.reviewCount += ratings.length;
+        if (r != null && r > 0) {
+          for (var tool in DummyData.tools) {
+            final tId = tool.id.toLowerCase();
+            final tName = tool.name.toLowerCase().trim();
+
+            if ((rId.isNotEmpty && rId == tId) || (rName.isNotEmpty && rName == tName)) {
+              if (!tool.hasRealFeedback) {
+                double newAvg = ((tool.rating * tool.reviewCount) + r) / (tool.reviewCount + 1);
+                tool.rating = double.parse(newAvg.toStringAsFixed(1));
+                tool.reviewCount += 1;
+                tool.hasRealFeedback = true;
+                tool.lastFeedbackRating = r;
+                tool.lastFeedbackTime = DateTime.now();
+                updatedAny = true;
+              }
+            }
+          }
         }
       }
-      if (mounted) setState(() {});
+      if (mounted && updatedAny) {
+        setState(() {});
+      }
     } catch (_) {}
   }
 
   @override
   void dispose() {
+    _ratingsTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -774,7 +789,33 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-                if (tool.rating >= 4.8 || tool.reviewCount >= 100)
+                if (tool.hasRealFeedback)
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFE53935), Color(0xFFFF8C00)],
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 6)],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.star, color: Colors.white, size: 10),
+                          const SizedBox(width: 2),
+                          Text(
+                            'RATED ${tool.lastFeedbackRating ?? tool.rating}★ BY CUSTOMER',
+                            style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (tool.rating >= 4.8 || tool.reviewCount >= 100)
                   Positioned(
                     top: 10,
                     left: 10,

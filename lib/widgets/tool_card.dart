@@ -69,7 +69,33 @@ class ToolCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (tool.rating >= 4.8 || tool.reviewCount >= 100)
+                if (tool.hasRealFeedback)
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFE53935), Color(0xFFFF8C00)],
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 6)],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.star, color: Colors.white, size: 10),
+                          const SizedBox(width: 2),
+                          Text(
+                            'RATED ${tool.lastFeedbackRating ?? tool.rating}★ BY CUSTOMER',
+                            style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (tool.rating >= 4.8 || tool.reviewCount >= 100)
                   Positioned(
                     top: 10,
                     left: 10,

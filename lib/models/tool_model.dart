@@ -12,6 +12,9 @@ class ToolModel {
   final VendorModel vendor;
   final List<String> specifications;
   final String location;
+  bool hasRealFeedback;
+  double? lastFeedbackRating;
+  DateTime? lastFeedbackTime;
 
   ToolModel({
     required this.id,
@@ -27,6 +30,9 @@ class ToolModel {
     required this.vendor,
     required this.specifications,
     required this.location,
+    this.hasRealFeedback = false,
+    this.lastFeedbackRating,
+    this.lastFeedbackTime,
   });
 }
 
